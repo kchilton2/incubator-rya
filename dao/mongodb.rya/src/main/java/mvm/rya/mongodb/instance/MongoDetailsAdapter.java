@@ -124,8 +124,12 @@ public class MongoDetailsAdapter {
             pcjBuilder.add(PCJ_FLUO_KEY, pcjDetails.getFluoDetails().get().getUpdateAppName());
         }
         final List<DBObject> pcjDetailList = new ArrayList<>();
+<<<<<<< 64c0caa14162a0b3f2603cc080ed187a0d2bd1ae
         for(final Entry<String, PCJDetails> entry : pcjDetails.getPCJDetails().entrySet()) {
             final PCJDetails pcjDetail = entry.getValue();
+=======
+        for(final PCJDetails pcjDetail : pcjDetails.getPCJDetails()) {
+>>>>>>> RYA-84 Add Mongo Support to Admin Table
             final BasicDBObjectBuilder indBuilbder = BasicDBObjectBuilder.start()
                 .add(PCJ_ID_KEY, pcjDetail.getId())
                 .add(PCJ_UPDATE_STRAT_KEY, pcjDetail.getUpdateStrategy().name());
