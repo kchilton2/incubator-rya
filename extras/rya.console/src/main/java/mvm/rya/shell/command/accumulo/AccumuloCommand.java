@@ -25,6 +25,11 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.security.Authorizations;
 
+import mvm.rya.accumulo.AccumuloRdfConfiguration;
+import mvm.rya.api.RdfCloudTripleStoreConfiguration;
+import mvm.rya.api.instance.RyaDetails;
+import mvm.rya.indexing.accumulo.ConfigUtils;
+
 /**
  * An abstract class that holds onto Accumulo access information. Extend this
  * when implementing a command that interacts with Accumulo.
@@ -75,4 +80,43 @@ public abstract class AccumuloCommand {
     public Authorizations getAuths() {
         return auths;
     }
+    
+    /**
+     * Builds a {@link AccumuloRdfConfiguration} object that will be used by the
+     * Rya DAO to initialize all of the tables it will need.
+     *
+     * @param connectionDetails - Indicates how to connect to Accumulo. (not null)
+     * @param details - Indicates what needs to be installed. (not null)
+     * @return A Rya Configuration object that can be used to perform the install.
+     */
+    protected static AccumuloRdfConfiguration makeRyaConfig(final AccumuloConnectionDetails connectionDetails, final RyaDetails details) {
+        final AccumuloRdfConfiguration conf = new AccumuloRdfConfiguration();
+
+        // The Rya Instance Name is used as a prefix for the index tables in Accumulo.
+        conf.set(RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX, details.getRyaInstanceName());
+
+        // Enable the indexers that the instance is configured to use.
+        conf.set(ConfigUtils.USE_PCJ, "" + details.getPCJIndexDetails().isEnabled() );
+        conf.set(ConfigUtils.USE_GEO, "" + details.getGeoIndexDetails().isEnabled() );
+        conf.set(ConfigUtils.USE_FREETEXT, "" + details.getFreeTextIndexDetails().isEnabled() );
+        conf.set(ConfigUtils.USE_TEMPORAL, "" + details.getTemporalIndexDetails().isEnabled() );
+        conf.set(ConfigUtils.USE_ENTITY, "" + details.getEntityCentricIndexDetails().isEnabled());
+
+        // XXX The Accumulo implementation of the secondary indices make need all
+        //     of the accumulo connector's parameters to initialize themselves, so
+        //     we need to include them here. It would be nice if the secondary
+        //     indexers used the connector that is provided to them instead of
+        //     building a new one.
+        conf.set(ConfigUtils.CLOUDBASE_USER, connectionDetails.getUsername());
+        conf.set(ConfigUtils.CLOUDBASE_PASSWORD, new String(connectionDetails.getPassword()));
+        conf.set(ConfigUtils.CLOUDBASE_INSTANCE, connectionDetails.getInstanceName());
+        conf.set(ConfigUtils.CLOUDBASE_ZOOKEEPERS, connectionDetails.getZookeepers());
+
+        // This initializes the living indexers that will be used by the application and
+        // caches them within the configuration object so that they may be used later.
+        ConfigUtils.setIndexers(conf);
+
+        return conf;
+    }
+
 }

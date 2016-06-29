@@ -24,13 +24,19 @@ import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.security.Authorizations;
 import org.openrdf.model.Statement;
 
+import mvm.rya.accumulo.AccumuloRdfConfiguration;
+import mvm.rya.accumulo.AccumuloRyaDAO;
+import mvm.rya.accumulo.instance.AccumuloRyaInstanceDetailsRepository;
+import mvm.rya.api.domain.RyaStatement;
+import mvm.rya.api.instance.RyaDetailsRepository;
+import mvm.rya.api.instance.RyaDetailsRepository.RyaDetailsRepositoryException;
+import mvm.rya.api.persist.RyaDAOException;
+import mvm.rya.api.resolver.RdfToRyaConversions;
 import mvm.rya.shell.command.CommandException;
 import mvm.rya.shell.command.InstanceDoesNotExistException;
 import mvm.rya.shell.command.accumulo.AccumuloCommand;
 import mvm.rya.shell.command.accumulo.AccumuloConnectionDetails;
 import mvm.rya.shell.command.data.LoadStatement;
-
-// TODO impl, test
 
 /**
  * An Accumulo implementation of the {@link LoadStatement} command.
@@ -52,8 +58,24 @@ public class AccumuloLoadStatement extends AccumuloCommand implements LoadStatem
     }
 
     @Override
-    public void loadStatement(final String instanceName, final Statement statement) throws InstanceDoesNotExistException, CommandException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Not implemented yet.");
+    public void loadStatement(final String instanceName, final Statement statement, final String columnVisibilities) throws InstanceDoesNotExistException, CommandException {
+        Connector conn = getConnector();
+        RyaDetailsRepository detailsRepo = new AccumuloRyaInstanceDetailsRepository(conn, instanceName);
+        AccumuloRdfConfiguration ryaConfig;
+		try {
+			ryaConfig = makeRyaConfig(getAccumuloConnectionDetails(), detailsRepo.getRyaInstanceDetails());
+	        final AccumuloRyaDAO ryaDao = new AccumuloRyaDAO();
+	        ryaDao.setConf( ryaConfig );
+	        ryaDao.setConnector(conn);
+	        ryaDao.init();
+	        RyaStatement ryaStatement = RdfToRyaConversions.convertStatement(statement);
+	        // set the visibilities
+	        ryaStatement.setColumnVisibility(columnVisibilities.getBytes());
+	        ryaDao.add(ryaStatement);
+	        ryaDao.flush();
+		} catch (RyaDetailsRepositoryException | RyaDAOException e) {
+			throw new CommandException(e);
+		}
+
     }
 }

@@ -18,13 +18,34 @@
  */
 package mvm.rya.shell.command.accumulo.data;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.security.Authorizations;
+import org.openrdf.model.Statement;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.RDFParseException;
+import org.openrdf.rio.RDFParser;
+import org.openrdf.rio.Rio;
+import org.openrdf.rio.UnsupportedRDFormatException;
 
+import mvm.rya.accumulo.AccumuloRdfConfiguration;
+import mvm.rya.accumulo.AccumuloRyaDAO;
+import mvm.rya.accumulo.instance.AccumuloRyaInstanceDetailsRepository;
+import mvm.rya.api.domain.RyaStatement;
+import mvm.rya.api.instance.RyaDetailsRepository;
+import mvm.rya.api.instance.RyaDetailsRepository.RyaDetailsRepositoryException;
+import mvm.rya.api.persist.RyaDAOException;
+import mvm.rya.api.resolver.RdfToRyaConversions;
+import mvm.rya.rdftriplestore.RdfCloudTripleStore;
 import mvm.rya.shell.command.CommandException;
 import mvm.rya.shell.command.InstanceDoesNotExistException;
 import mvm.rya.shell.command.accumulo.AccumuloCommand;
@@ -53,10 +74,41 @@ public class AccumuloLoadStatementsFile extends AccumuloCommand implements LoadS
     }
 
     @Override
-    public void load(final String instanceName, final Path statementsFile, final StatementFileFormat format)
+    public void load(final String instanceName, final Path statementsFile)
             throws InstanceDoesNotExistException, CommandException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
+        // get an input stream   	
+
+ 		try {
+	        Connector connector = getConnector();
+	        RyaDetailsRepository detailsRepo = new AccumuloRyaInstanceDetailsRepository(connector, instanceName);
+	        AccumuloRyaDAO dao = new AccumuloRyaDAO();
+	        dao.setConnector(connector);
+	        RdfCloudTripleStore store = new RdfCloudTripleStore();
+			AccumuloRdfConfiguration conf = makeRyaConfig(getAccumuloConnectionDetails(), detailsRepo.getRyaInstanceDetails());
+	        dao.setConf(conf);
+	        dao.init();
+	        store.setRyaDAO(dao);
+	        
+	        // get the rdf statements
+	        
+	        RDFFormat format = Rio.getParserFormatForFileName(statementsFile.getFileName().toFile().getName(), RDFFormat.NTRIPLES);
+	        RDFParser parser = Rio.createParser(format);
+	        InputStream in = Files.newInputStream(statementsFile);
+	        StatementHandler handler = new StatementHandler();
+	        parser.setRDFHandler(handler);
+	        parser.parse(in, "");
+	        Set<Statement> statements = handler.getStatements();
+	        Set<RyaStatement> ryaStatements = new HashSet<RyaStatement>();
+	        for (Statement statement : statements){
+	        	// TODO not adding visibilities
+	        	ryaStatements.add(RdfToRyaConversions.convertStatement(statement));
+	        }
+	        dao.add(ryaStatements.iterator());
+	        dao.flush();
+		} catch (RyaDetailsRepositoryException | RyaDAOException |
+				UnsupportedRDFormatException | IOException | RDFParseException | RDFHandlerException e) {
+			throw new CommandException(e);
+		} 
+      }
 
 }

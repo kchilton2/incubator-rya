@@ -196,15 +196,16 @@ public class RyaDetails implements Serializable {
         private String version;
 
         // Secondary Index Details.
-        private EntityCentricIndexDetails entityCentricDetails;
-        private GeoIndexDetails geoDetails;
-        private PCJIndexDetails pcjDetails;
-        private TemporalIndexDetails temporalDetails;
-        private FreeTextIndexDetails freeTextDetails;
+        private EntityCentricIndexDetails entityCentricDetails = new EntityCentricIndexDetails(false);
+        private GeoIndexDetails geoDetails= new GeoIndexDetails(false);
+        private PCJIndexDetails pcjDetails= PCJIndexDetails.builder().setEnabled(false).build();
+        private TemporalIndexDetails temporalDetails= new TemporalIndexDetails(false);
+        private FreeTextIndexDetails freeTextDetails= new FreeTextIndexDetails(false);
 
         // Statistics Details.
-        private ProspectorDetails prospectorDetails;
-        private JoinSelectivityDetails joinSelectivityDetails;
+        private Date nullDate = null;
+        private ProspectorDetails prospectorDetails = new ProspectorDetails(Optional.fromNullable(nullDate));
+        private JoinSelectivityDetails joinSelectivityDetails = new JoinSelectivityDetails(Optional.fromNullable(nullDate));
 
         /**
          * Construcst an empty instance of {@link Builder}.

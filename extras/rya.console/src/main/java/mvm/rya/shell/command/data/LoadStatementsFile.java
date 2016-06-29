@@ -44,16 +44,6 @@ public interface LoadStatementsFile {
      * @throws InstanceDoesNotExistException No instance of Rya exists for the provided name.
      * @throws CommandException Something caused the command to fail.
      */
-    public void load(final String instanceName, final Path statementsFile, final StatementFileFormat format)
+    public void load(final String instanceName, final Path statementsFile)
             throws InstanceDoesNotExistException, CommandException;
-
-    /**
-     * Defines the RDF Statement file formats that are supported by the {@link LoadStatementsFile} command.
-     */
-    public static enum StatementFileFormat {
-        NTRIPLE,
-        TURTLE;
-
-        // TODO Fill this in.
-    }
 }

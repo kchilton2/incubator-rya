@@ -34,4 +34,8 @@ public class CommandException extends Exception {
     public CommandException(final String message, final Throwable cause) {
         super(message, cause);
     }
+
+	public CommandException(Exception e) {
+		super(e);
+	}
 }

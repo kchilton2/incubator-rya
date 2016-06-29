@@ -39,5 +39,5 @@ public interface LoadStatement {
      * @throws InstanceDoesNotExistException No instance of Rya exists for the provided name.
      * @throws CommandException Something caused the command to fail.
      */
-    public void loadStatement(final String instanceName, final Statement statement) throws InstanceDoesNotExistException, CommandException;
+    public void loadStatement(final String instanceName, final Statement statement, String columnVisibilities) throws InstanceDoesNotExistException, CommandException;
 }
