@@ -51,7 +51,7 @@ public class ScannerBindingSetIterator implements Iterator<BindingSet> {
      */
     public ScannerBindingSetIterator(final Scanner scanner, final VariableOrder varOrder) {
         requireNonNull(scanner);
-        this.accEntries = scanner.iterator();
+        accEntries = scanner.iterator();
         this.varOrder = requireNonNull(varOrder);
     }
 
@@ -69,5 +69,10 @@ public class ScannerBindingSetIterator implements Iterator<BindingSet> {
         } catch (final BindingSetConversionException e) {
             throw new RuntimeException("Could not deserialize a BindingSet from Accumulo.", e);
         }
+    }
+
+    @Override
+    public void remove() {
+        throw new UnsupportedOperationException("remove");
     }
 }
