@@ -49,6 +49,10 @@ under the License.
             <groupId>io.fluo</groupId>
             <artifactId>fluo-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.fluo</groupId>
+            <artifactId>fluo-core</artifactId>
+        </dependency>
         
         <!-- Testing dependencies. -->
         <dependency>

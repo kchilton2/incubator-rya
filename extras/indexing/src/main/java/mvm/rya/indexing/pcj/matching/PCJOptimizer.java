@@ -26,17 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import mvm.rya.api.RdfCloudTripleStoreConfiguration;
-import mvm.rya.indexing.IndexPlanValidator.IndexPlanValidator;
-import mvm.rya.indexing.IndexPlanValidator.IndexedExecutionPlanGenerator;
-import mvm.rya.indexing.IndexPlanValidator.ThreshholdPlanSelector;
-import mvm.rya.indexing.IndexPlanValidator.TupleReArranger;
-import mvm.rya.indexing.IndexPlanValidator.ValidIndexCombinationGenerator;
-import mvm.rya.indexing.accumulo.ConfigUtils;
-import mvm.rya.indexing.external.accumulo.AccumuloPcjStorage;
-import mvm.rya.indexing.external.tupleSet.AccumuloIndexSet;
-import mvm.rya.indexing.external.tupleSet.ExternalTupleSet;
-
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
@@ -46,6 +35,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Logger;
 import org.apache.rya.indexing.pcj.storage.PcjException;
 import org.apache.rya.indexing.pcj.storage.PrecomputedJoinStorage;
+import org.apache.rya.indexing.pcj.storage.accumulo.AccumuloPcjStorage;
 import org.apache.rya.indexing.pcj.storage.accumulo.PcjTableNameFactory;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
@@ -63,6 +53,16 @@ import org.openrdf.sail.SailException;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+
+import mvm.rya.api.RdfCloudTripleStoreConfiguration;
+import mvm.rya.indexing.IndexPlanValidator.IndexPlanValidator;
+import mvm.rya.indexing.IndexPlanValidator.IndexedExecutionPlanGenerator;
+import mvm.rya.indexing.IndexPlanValidator.ThreshholdPlanSelector;
+import mvm.rya.indexing.IndexPlanValidator.TupleReArranger;
+import mvm.rya.indexing.IndexPlanValidator.ValidIndexCombinationGenerator;
+import mvm.rya.indexing.accumulo.ConfigUtils;
+import mvm.rya.indexing.external.tupleSet.AccumuloIndexSet;
+import mvm.rya.indexing.external.tupleSet.ExternalTupleSet;
 
 /**
  * {@link QueryOptimizer} which matches {@link TupleExpr}s associated with

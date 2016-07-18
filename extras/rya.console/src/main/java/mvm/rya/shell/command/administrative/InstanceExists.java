@@ -1,6 +1,4 @@
-package mvm.rya.console;
-
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -8,9 +6,9 @@ package mvm.rya.console;
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
- *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -18,30 +16,24 @@ package mvm.rya.console;
  * specific language governing permissions and limitations
  * under the License.
  */
+package mvm.rya.shell.command.administrative;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.shell.plugin.support.DefaultPromptProvider;
-import org.springframework.stereotype.Component;
+import mvm.rya.shell.command.CommandException;
 
 /**
- * @author Jarred Li
- *
+ * Checks if an instance of Rya has been installed.
  */
-@Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
-public class RyaPromptProvider extends DefaultPromptProvider {
+@ParametersAreNonnullByDefault
+public interface InstanceExists {
 
-	@Override
-	public String getPrompt() {
-		return "rya>";
-	}
-
-	
-	@Override
-	public String getProviderName() {
-		return "Rya Console Prompt";
-	}
-
+    /**
+     * Checks if an instance of Rya has been installed.
+     *
+     * @param instanceName - The name to check. (not null)
+     * @return {@code true} If an instance of Rya exists with the provided name; otherwise {@code false}.
+     * @throws CommandException Something caused the command to fail.
+     */
+    public boolean exists(String instanceName) throws CommandException;
 }

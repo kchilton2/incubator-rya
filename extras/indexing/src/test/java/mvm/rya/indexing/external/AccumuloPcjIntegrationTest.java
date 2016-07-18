@@ -26,16 +26,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import mvm.rya.accumulo.AccumuloRdfConfiguration;
-import mvm.rya.api.RdfCloudTripleStoreConfiguration;
-import mvm.rya.api.persist.RyaDAOException;
-import mvm.rya.indexing.IndexPlanValidator.IndexPlanValidator;
-import mvm.rya.indexing.accumulo.ConfigUtils;
-import mvm.rya.indexing.external.tupleSet.AccumuloIndexSet;
-import mvm.rya.indexing.external.tupleSet.ExternalTupleSet;
-import mvm.rya.indexing.pcj.matching.PCJOptimizer;
-import mvm.rya.rdftriplestore.inference.InferenceEngineException;
-
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
@@ -74,6 +64,16 @@ import com.beust.jcommander.internal.Sets;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 
+import mvm.rya.accumulo.AccumuloRdfConfiguration;
+import mvm.rya.api.RdfCloudTripleStoreConfiguration;
+import mvm.rya.api.persist.RyaDAOException;
+import mvm.rya.indexing.IndexPlanValidator.IndexPlanValidator;
+import mvm.rya.indexing.accumulo.ConfigUtils;
+import mvm.rya.indexing.external.tupleSet.AccumuloIndexSet;
+import mvm.rya.indexing.external.tupleSet.ExternalTupleSet;
+import mvm.rya.indexing.pcj.matching.PCJOptimizer;
+import mvm.rya.rdftriplestore.inference.InferenceEngineException;
+
 public class AccumuloPcjIntegrationTest {
 
 	private SailRepositoryConnection conn, pcjConn;
@@ -90,7 +90,7 @@ public class AccumuloPcjIntegrationTest {
 			MalformedQueryException, AccumuloException,
 			AccumuloSecurityException, TableExistsException, RyaDAOException,
 			TableNotFoundException, InferenceEngineException,
-			NumberFormatException, UnknownHostException {
+			NumberFormatException, UnknownHostException, SailException {
 
 		repo = PcjIntegrationTestingUtil.getNonPcjRepo(prefix, "instance");
 		conn = repo.getConnection();

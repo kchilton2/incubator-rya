@@ -20,14 +20,6 @@
 import java.net.UnknownHostException;
 import java.util.List;
 
-import mvm.rya.accumulo.AccumuloRdfConfiguration;
-import mvm.rya.api.RdfCloudTripleStoreConfiguration;
-import mvm.rya.api.persist.RyaDAOException;
-import mvm.rya.indexing.accumulo.ConfigUtils;
-import mvm.rya.indexing.accumulo.geo.GeoConstants;
-import mvm.rya.rdftriplestore.inference.InferenceEngineException;
-import mvm.rya.sail.config.RyaSailFactory;
-
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
@@ -61,8 +53,17 @@ import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.repository.sail.SailRepositoryConnection;
 import org.openrdf.sail.Sail;
+import org.openrdf.sail.SailException;
 
 import com.google.common.base.Optional;
+
+import mvm.rya.accumulo.AccumuloRdfConfiguration;
+import mvm.rya.api.RdfCloudTripleStoreConfiguration;
+import mvm.rya.api.persist.RyaDAOException;
+import mvm.rya.indexing.accumulo.ConfigUtils;
+import mvm.rya.indexing.accumulo.geo.GeoConstants;
+import mvm.rya.rdftriplestore.inference.InferenceEngineException;
+import mvm.rya.sail.config.RyaSailFactory;
 
 public class RyaDirectExample {
 	private static final Logger log = Logger.getLogger(RyaDirectExample.class);
@@ -730,7 +731,7 @@ public class RyaDirectExample {
 			throws RepositoryException, AccumuloException,
 			AccumuloSecurityException, TableExistsException, PcjException,
 			InferenceEngineException, NumberFormatException,
-			UnknownHostException {
+			UnknownHostException, SailException {
 
 		final Configuration config = new AccumuloRdfConfiguration(conf);
 		config.set(ConfigUtils.USE_PCJ, "false");

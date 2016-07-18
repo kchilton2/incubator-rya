@@ -28,6 +28,7 @@ import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.hadoop.conf.Configuration;
 import org.openrdf.sail.Sail;
+import org.openrdf.sail.SailException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,12 +57,19 @@ import mvm.rya.rdftriplestore.inference.InferenceEngineException;
 public class RyaSailFactory {
     private static final Logger LOG = LoggerFactory.getLogger(RyaSailFactory.class);
 
+    /**
+     * TODO doc
+     *
+     * @param conf
+     * @return
+     * @throws SailException
+     */
     public static Sail getInstance(final Configuration conf) throws AccumuloException,
-        AccumuloSecurityException, RyaDAOException, InferenceEngineException {
+        AccumuloSecurityException, RyaDAOException, InferenceEngineException, SailException {
         return getRyaSail(conf);
     }
 
-    private static Sail getRyaSail(final Configuration config) throws InferenceEngineException, RyaDAOException, AccumuloException, AccumuloSecurityException {
+    private static Sail getRyaSail(final Configuration config) throws InferenceEngineException, RyaDAOException, AccumuloException, AccumuloSecurityException, SailException {
         final RdfCloudTripleStore store = new RdfCloudTripleStore();
         final RyaDAO<?> dao;
         final RdfCloudTripleStoreConfiguration rdfConfig;
@@ -90,6 +98,8 @@ public class RyaSailFactory {
             inferenceEngine.init();
             store.setInferenceEngine(inferenceEngine);
         }
+
+        store.initialize();
 
         return store;
     }
