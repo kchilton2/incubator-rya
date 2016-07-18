@@ -103,7 +103,7 @@ public class AccumuloTemporalIndexer extends AbstractAccumuloIndexer implements 
 
     private void initInternal() throws AccumuloException, AccumuloSecurityException, TableNotFoundException,
             TableExistsException {
-        temporalIndexTableName = ConfigUtils.getTemporalTableName(conf);
+        temporalIndexTableName = getTableName();
         // Create one index table on first run.
         ConfigUtils.createTableIfNotExists(conf, temporalIndexTableName);
 
@@ -878,7 +878,7 @@ public class AccumuloTemporalIndexer extends AbstractAccumuloIndexer implements 
 
     @Override
     public String getTableName() {
-       return ConfigUtils.getTemporalTableName(conf);
+       return ConfigUtils.getTablePrefix(conf)  + "temporal";
     }
 
     private void deleteStatement(final Statement statement) throws IOException, IllegalArgumentException {

@@ -62,7 +62,7 @@ public class MongoFreeTextIndexerTest {
         conf.set(MongoDBRdfConfiguration.USE_TEST_MONGO, "true");
         conf.set(MongoDBRdfConfiguration.MONGO_DB_NAME, "test");
         conf.set(MongoDBRdfConfiguration.MONGO_COLLECTION_PREFIX, "rya_");
-        conf.set(ConfigUtils.FREE_TEXT_DOC_TABLENAME, "freetext");
+        conf.set(MongoDBRdfConfiguration.CONF_TBL_PREFIX, "another_");
         final MongodForTestsFactory testsFactory = MongodForTestsFactory.with(Version.Main.PRODUCTION);
         mongoClient = testsFactory.newMongo();
    }

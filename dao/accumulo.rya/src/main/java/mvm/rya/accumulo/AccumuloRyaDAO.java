@@ -489,7 +489,7 @@ public class AccumuloRyaDAO implements RyaDAO<AccumuloRdfConfiguration>, RyaName
 
         // Additional Tables
         for (AccumuloIndexer index : secondaryIndexers) {
-            tableNames.add(index.getTableName());
+            tableNames.add(index.getTableName());  // TODO: some indexers have multiple tables, should return a list.
         }
 
         return tableNames.toArray(new String[]{});

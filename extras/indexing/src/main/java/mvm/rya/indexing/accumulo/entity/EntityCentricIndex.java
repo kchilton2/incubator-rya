@@ -77,7 +77,7 @@ public class EntityCentricIndex extends AbstractAccumuloIndexer {
 
     private void initInternal() throws AccumuloException, AccumuloSecurityException, TableNotFoundException, IOException,
             TableExistsException {
-        ConfigUtils.createTableIfNotExists(conf, ConfigUtils.getEntityTableName(conf));
+        ConfigUtils.createTableIfNotExists(conf, getTableName());
     }
 
     @Override
@@ -118,7 +118,10 @@ public class EntityCentricIndex extends AbstractAccumuloIndexer {
 
     @Override
     public String getTableName() {
-        return ConfigUtils.getEntityTableName(conf);
+        return getTableName(conf);
+    }
+    public static String getTableName(Configuration conf) {
+        return ConfigUtils.getTablePrefix(conf)  + "entity";
     }
 
     @Override

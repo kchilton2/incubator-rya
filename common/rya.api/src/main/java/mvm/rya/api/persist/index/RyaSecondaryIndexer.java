@@ -34,7 +34,7 @@ import mvm.rya.api.domain.RyaURI;
 
 public interface RyaSecondaryIndexer extends Closeable, Flushable, Configurable {
 
-    public String getTableName();
+    public String getTableName(); // TODO: some indexers have multiple tables, should return a list.
 
     public void storeStatements(Collection<RyaStatement> statements) throws IOException;
 

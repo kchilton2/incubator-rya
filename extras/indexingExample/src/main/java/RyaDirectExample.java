@@ -89,7 +89,7 @@ public class RyaDirectExample {
 
 		try {
 			log.info("Connecting to Indexing Sail Repository.");
-
+			// TODO: this fails here because the Table x_test_triplestore_po is not created.  Possibly creatTables() commented above?
 			final Sail extSail = RyaSailFactory.getInstance(conf);
 			repository = new SailRepository(extSail);
 			repository.initialize();

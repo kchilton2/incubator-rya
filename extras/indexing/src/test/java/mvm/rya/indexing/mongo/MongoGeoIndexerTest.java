@@ -53,7 +53,6 @@ import com.vividsolutions.jts.geom.impl.PackedCoordinateSequence;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.mongo.tests.MongodForTestsFactory;
 import info.aduna.iteration.CloseableIteration;
-import mvm.rya.api.RdfCloudTripleStoreConfiguration;
 import mvm.rya.indexing.StatementConstraints;
 import mvm.rya.indexing.accumulo.ConfigUtils;
 import mvm.rya.indexing.accumulo.geo.GeoConstants;
@@ -77,8 +76,7 @@ public class MongoGeoIndexerTest {
         conf.set(MongoDBRdfConfiguration.MONGO_COLLECTION_PREFIX, "rya_");
         conf.set(ConfigUtils.GEO_PREDICATES_LIST, "http://www.opengis.net/ont/geosparql#asWKT");
         conf.set(ConfigUtils.USE_GEO, "true");
-        conf.set(RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX, "rya_");
-        conf.set(ConfigUtils.GEO_TABLENAME, "geospacial");
+        conf.set(MongoDBRdfConfiguration.CONF_TBL_PREFIX, "rya_");
 
         final MongodForTestsFactory testsFactory = MongodForTestsFactory.with(Version.Main.PRODUCTION);
         mongoClient = testsFactory.newMongo();

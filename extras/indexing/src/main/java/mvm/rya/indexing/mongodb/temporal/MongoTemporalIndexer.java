@@ -150,7 +150,7 @@ public class MongoTemporalIndexer extends AbstractMongoIndexer<TemporalMongoDBSt
 
     @Override
     public String getCollectionName() {
-        return ConfigUtils.getTemporalTableName(conf);
+        return ConfigUtils.getTablePrefix(conf)  + "temporal";
     }
 
     @VisibleForTesting

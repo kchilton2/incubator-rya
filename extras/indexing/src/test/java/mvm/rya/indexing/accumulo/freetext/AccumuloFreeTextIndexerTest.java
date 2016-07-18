@@ -48,6 +48,7 @@ import com.google.common.collect.Sets;
 
 import info.aduna.iteration.CloseableIteration;
 import junit.framework.Assert;
+import mvm.rya.api.RdfCloudTripleStoreConfiguration;
 import mvm.rya.api.domain.RyaStatement;
 import mvm.rya.api.domain.RyaType;
 import mvm.rya.api.domain.RyaURI;
@@ -63,28 +64,27 @@ public class AccumuloFreeTextIndexerTest {
 
     @Before
     public void before() throws Exception {
-        String tableName = "triplestore_freetext";
-        String termTableName = "triplestore_freetext_term";
         conf = new Configuration();
         conf.setBoolean(ConfigUtils.USE_MOCK_INSTANCE, true);
         conf.set(ConfigUtils.CLOUDBASE_USER, "USERNAME");
         conf.set(ConfigUtils.CLOUDBASE_PASSWORD, "PASS");
-        conf.set(ConfigUtils.FREE_TEXT_DOC_TABLENAME, tableName);
-        conf.set(ConfigUtils.FREE_TEXT_TERM_TABLENAME, termTableName);
         conf.set(ConfigUtils.CLOUDBASE_AUTHS, "U");
         conf.setClass(ConfigUtils.TOKENIZER_CLASS, SimpleTokenizer.class, Tokenizer.class);
-
-        createTable(conf, tableName);
-        createTable(conf, termTableName);
+        conf.set(RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX,"triplestore_");
+        
+        // If a table exists from last time, delete it.
+        String[] tableNames = AccumuloFreeTextIndexer.getTableNames(conf);
+        for (String name : tableNames)
+        	destroyTable(conf, name);
+        // Tables are created in each test with setConf(conf)
     }
 
-    private static void createTable(Configuration conf, String tablename) throws AccumuloException, AccumuloSecurityException,
+    private static void destroyTable(Configuration conf, String tablename) throws AccumuloException, AccumuloSecurityException,
             TableNotFoundException, TableExistsException {
         TableOperations tableOps = ConfigUtils.getConnector(conf).tableOperations();
         if (tableOps.exists(tablename)) {
             tableOps.delete(tablename);
         }
-        tableOps.create(tablename);
     }
 
     @Test

@@ -57,6 +57,6 @@ public class MongoFreeTextIndexer extends AbstractMongoIndexer<TextMongoDBStorag
 
     @Override
     public String getCollectionName() {
-        return ConfigUtils.getFreeTextDocTablename(conf);
+    	return mvm.rya.indexing.accumulo.ConfigUtils.getTablePrefix(conf)  + "freetext";
     }
 }

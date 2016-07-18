@@ -52,6 +52,7 @@ import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.geom.impl.PackedCoordinateSequence;
 
 import info.aduna.iteration.CloseableIteration;
+import mvm.rya.api.RdfCloudTripleStoreConfiguration;
 import mvm.rya.indexing.StatementConstraints;
 import mvm.rya.indexing.accumulo.ConfigUtils;
 
@@ -64,13 +65,13 @@ public class GeoIndexerTest {
 
     @Before
     public void before() throws Exception {
-        System.out.println(UUID.randomUUID().toString());
-        String tableName = "triplestore_geospacial";
+        //System.out.println(UUID.randomUUID().toString());
         conf = new Configuration();
+        conf.set(RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX, "triplestore_");
+        String tableName = GeoMesaGeoIndexer.getTableName(conf);// was "triplestore_geospacial";
         conf.setBoolean(ConfigUtils.USE_MOCK_INSTANCE, true);
         conf.set(ConfigUtils.CLOUDBASE_USER, "USERNAME");
         conf.set(ConfigUtils.CLOUDBASE_PASSWORD, "PASS");
-        conf.set(ConfigUtils.GEO_TABLENAME, tableName);
         conf.set(ConfigUtils.CLOUDBASE_AUTHS, "U");
 
         TableOperations tops = ConfigUtils.getConnector(conf).tableOperations();

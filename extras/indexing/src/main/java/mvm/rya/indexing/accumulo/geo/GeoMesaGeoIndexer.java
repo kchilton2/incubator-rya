@@ -190,7 +190,7 @@ public class GeoMesaGeoIndexer extends AbstractAccumuloIndexer implements GeoInd
         final String user = ConfigUtils.getUsername(conf);
         final String password = ConfigUtils.getPassword(conf);
         final String auths = ConfigUtils.getAuthorizations(conf).toString();
-        final String tableName = ConfigUtils.getGeoTablename(conf);
+        final String tableName = getTableName(conf);
         final int numParitions = ConfigUtils.getGeoNumPartitions(conf);
 
         final String featureSchemaFormat = "%~#s%" + numParitions + "#r%" + FEATURE_NAME
@@ -435,8 +435,11 @@ public class GeoMesaGeoIndexer extends AbstractAccumuloIndexer implements GeoInd
 
     @Override
     public String getTableName() {
-       return ConfigUtils.getGeoTablename(conf);
+            return getTableName(conf);
     }
+    public static String getTableName(Configuration conf) {
+        return ConfigUtils.getTablePrefix(conf)  + "geo";
+}
 
     private void deleteStatements(final Collection<RyaStatement> ryaStatements) throws IOException {
         // create a feature collection

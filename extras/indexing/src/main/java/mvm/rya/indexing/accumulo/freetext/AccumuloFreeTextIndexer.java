@@ -212,8 +212,8 @@ public class AccumuloFreeTextIndexer extends AbstractAccumuloIndexer implements 
 
     private void initInternal() throws AccumuloException, AccumuloSecurityException, TableNotFoundException,
             TableExistsException {
-        String doctable = ConfigUtils.getFreeTextDocTablename(conf);
-        String termtable = ConfigUtils.getFreeTextTermTablename(conf);
+        String doctable = getFreeTextDocTablename(conf);
+        String termtable = getFreeTextTermTablename(conf);
 
         docTableNumPartitions = ConfigUtils.getFreeTextDocNumPartitions(conf);
         int termTableNumPartitions = ConfigUtils.getFreeTextTermNumPartitions(conf);
@@ -397,7 +397,7 @@ public class AccumuloFreeTextIndexer extends AbstractAccumuloIndexer implements 
     }
 
     private Set<String> unrollWildcard(String string, boolean reverse) throws IOException {
-        Scanner termTableScan = getScanner(ConfigUtils.getFreeTextTermTablename(conf));
+        Scanner termTableScan = getScanner(getFreeTextTermTablename(conf));
 
         Set<String> unrolledTerms = new HashSet<String>();
 
@@ -482,7 +482,7 @@ public class AccumuloFreeTextIndexer extends AbstractAccumuloIndexer implements 
     @Override
     public CloseableIteration<Statement, QueryEvaluationException> queryText(String query, StatementConstraints contraints)
             throws IOException {
-        Scanner docTableScan = getScanner(ConfigUtils.getFreeTextDocTablename(conf));
+        Scanner docTableScan = getScanner(getFreeTextDocTablename(conf));
 
         // test the query to see if it's parses correctly.
         SimpleNode root = parseQuery(query);
@@ -601,7 +601,20 @@ public class AccumuloFreeTextIndexer extends AbstractAccumuloIndexer implements 
 
     @Override
     public String getTableName() {
-       return ConfigUtils.getFreeTextDocTablename(conf);
+       return getFreeTextDocTablename(conf);
+       // TODO: use the two table version of this below, base class should return a list.
+    }
+    public static String[] getTableNames(Configuration conf) {
+        return new String[] { 
+        		getFreeTextDocTablename(conf),
+        		getFreeTextTermTablename(conf) };
+     }
+    public static String getFreeTextDocTablename(Configuration conf) {
+        return mvm.rya.indexing.accumulo.ConfigUtils.getTablePrefix(conf)  + "freetext";
+    }
+
+    public static String getFreeTextTermTablename(Configuration conf) {
+        return mvm.rya.indexing.accumulo.ConfigUtils.getTablePrefix(conf)  + "freetext_term";
     }
 
     private void deleteStatement(Statement statement) throws IOException {
@@ -682,7 +695,7 @@ public class AccumuloFreeTextIndexer extends AbstractAccumuloIndexer implements 
      */
     private boolean doesTermExistInOtherDocs(String term, int currentDocId, Text docIdText) {
         try {
-            String freeTextDocTableName = ConfigUtils.getFreeTextDocTablename(conf);
+            String freeTextDocTableName = getFreeTextDocTablename(conf);
             Scanner scanner = getScanner(freeTextDocTableName);
 
             String t = StringUtils.removeEnd(term, "*").toLowerCase();

@@ -113,6 +113,6 @@ public class MongoGeoIndexer extends AbstractMongoIndexer<GeoMongoDBStorageStrat
 
     @Override
     public String getCollectionName() {
-        return ConfigUtils.getGeoTablename(conf);
+        return ConfigUtils.getTablePrefix(conf)  + "geo";
     }
 }
