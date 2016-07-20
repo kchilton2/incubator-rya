@@ -23,6 +23,7 @@ package mvm.rya.indexing.accumulo;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import mvm.rya.accumulo.AccumuloRdfConfiguration;
@@ -54,7 +55,6 @@ import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.security.Authorizations;
-import org.apache.commons.lang.Validate;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -67,8 +67,7 @@ import com.google.common.collect.Lists;
 
 /**
  * A set of configuration utils to read a Hadoop {@link Configuration} object and create Cloudbase/Accumulo objects.
- * Soon will deprecated this class.  Use installer for the set methods, use RyaDetails for the get methods. 
- * Use {@link RyaDetails} or {@link ConfigurationFields}
+ * Soon will deprecate this class.  Use installer for the set methods, use {@link RyaDetails} for the get methods. 
  * New code must separate parameters that are set at Rya install time from that which is specific to the client.
  * Also Accumulo index tables are pushed down to the implementation and not configured in conf.   
  */
@@ -88,12 +87,7 @@ public class ConfigUtils {
 
     public static final String FREE_TEXT_QUERY_TERM_LIMIT = "sc.freetext.querytermlimit";
 
-//    public static final String FREE_TEXT_DOC_TABLENAME = "sc.freetext.doctable";
-//    public static final String FREE_TEXT_TERM_TABLENAME = "sc.freetext.termtable";
-//    public static final String GEO_TABLENAME = "sc.geo.table";
     public static final String GEO_NUM_PARTITIONS = "sc.geo.numPartitions";
-//    public static final String TEMPORAL_TABLENAME = "sc.temporal.index";
-//    public static final String ENTITY_TABLENAME = "sc.entity.index";
 
     public static final String USE_GEO = "sc.use_geo";
     public static final String USE_FREETEXT = "sc.use_freetext";
@@ -146,7 +140,7 @@ public class ConfigUtils {
      */
     private static String getStringCheckSet(final Configuration conf, final String key) {
         final String value = conf.get(key);
-        Validate.notNull(value, key + " not set");
+        Objects.requireNonNull(value, key + " not set");
         return value;
     }
 
@@ -170,18 +164,18 @@ public class ConfigUtils {
     }
 
     /**
-     * Lookup the table name prefix and throw an error if it is null.
-     * TODO get table prefix from RyaDetails
-     * @param conf
-     * @return
+     * Lookup the table name prefix in the conf and throw an error if it is null.
+     * TODO get table prefix from RyaDetails -- the Rya instance name
+     * @param conf  Rya configuration map where it extracts the prefix (instance name)
+     * @return  index table prefix corresponding to this Rya instance
      */
-	public static String getTablePrefix(final Configuration conf) {
-		final String tablePrefix;
-		tablePrefix = conf.get(RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX);
-		Validate.notNull(tablePrefix, RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX + " not set.  Cannot generate table name.");
-		return tablePrefix;
-	}
-
+    public static String getTablePrefix(final Configuration conf) {
+        final String tablePrefix;
+        tablePrefix = conf.get(RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX);
+        Objects.requireNonNull(tablePrefix, "Configuration key: " + RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX
+                + " not set.  Cannot generate table name.");
+        return tablePrefix;
+    }
 
     public static int getFreeTextTermLimit(final Configuration conf) {
         return conf.getInt(FREE_TEXT_QUERY_TERM_LIMIT, 100);

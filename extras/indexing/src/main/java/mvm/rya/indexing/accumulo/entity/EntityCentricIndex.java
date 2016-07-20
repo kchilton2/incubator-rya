@@ -73,8 +73,6 @@ public class EntityCentricIndex extends AbstractAccumuloIndexer {
     private BatchWriter writer;
     private boolean isInit = false;
 
-    public static final String CONF_TABLE_SUFFIX = "ac.indexer.eci.tablename";
-
     private void initInternal() throws AccumuloException, AccumuloSecurityException, TableNotFoundException, IOException,
             TableExistsException {
         ConfigUtils.createTableIfNotExists(conf, getTableName());
@@ -121,7 +119,7 @@ public class EntityCentricIndex extends AbstractAccumuloIndexer {
         return getTableName(conf);
     }
     public static String getTableName(Configuration conf) {
-        return ConfigUtils.getTablePrefix(conf)  + "entity";
+        return ConfigUtils.getTablePrefix(conf)  + TABLE_SUFFIX;
     }
 
     @Override

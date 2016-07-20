@@ -65,10 +65,9 @@ public class GeoIndexerTest {
 
     @Before
     public void before() throws Exception {
-        //System.out.println(UUID.randomUUID().toString());
         conf = new Configuration();
         conf.set(RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX, "triplestore_");
-        String tableName = GeoMesaGeoIndexer.getTableName(conf);// was "triplestore_geospacial";
+        String tableName = GeoMesaGeoIndexer.getTableName(conf);
         conf.setBoolean(ConfigUtils.USE_MOCK_INSTANCE, true);
         conf.set(ConfigUtils.CLOUDBASE_USER, "USERNAME");
         conf.set(ConfigUtils.CLOUDBASE_PASSWORD, "PASS");

@@ -93,11 +93,6 @@ public final class MongoTemporalIndexerTest {
     private static final String STAT_VALUEHASH = "valuehash";
     private static final StatementConstraints EMPTY_CONSTRAINTS = new StatementConstraints();
 
-    // Recreate table name for each test instance in this JVM.
-    //String uniquePerTestTemporalIndexTableName = TEST_TEMPORAL_INDEX_TABLE_NAME + String.format("%05d", nextTableSuffixAtomic.getAndIncrement());
-    // start at 0, for uniqueness between jvm's consider AtomicLong(new Random().nextLong())
-    //private static final AtomicLong nextTableSuffixAtomic = new AtomicLong();
-
     // Assign this in setUpBeforeClass, store them in each test.
     // setup() deletes table before each test.
     static final Statement spo_B00_E01;

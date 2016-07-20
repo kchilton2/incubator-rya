@@ -26,6 +26,8 @@ import static mvm.rya.indexing.accumulo.freetext.query.ASTNodeUtils.getNodeItera
 import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -185,6 +187,10 @@ import mvm.rya.indexing.accumulo.freetext.query.TokenMgrError;
  * <pre>
  */
 public class AccumuloFreeTextIndexer extends AbstractAccumuloIndexer implements FreeTextIndexer  {
+    private static final String TABLE_SUFFIX_TERM = "freetext_term";
+
+    private static final String TABLE_SUFFFIX_DOC = "freetext";
+
     private static final Logger logger = Logger.getLogger(AccumuloFreeTextIndexer.class);
 
     private static final boolean IS_TERM_TABLE_TOKEN_DELETION_ENABLED = true;
@@ -598,23 +604,42 @@ public class AccumuloFreeTextIndexer extends AbstractAccumuloIndexer implements 
         return root;
     }
 
-
+    /**
+     * Get Free Text Document index table's name 
+     * Use the two table version of this below. This one is required by base class. 
+     */
     @Override
     public String getTableName() {
        return getFreeTextDocTablename(conf);
-       // TODO: use the two table version of this below, base class should return a list.
     }
-    public static String[] getTableNames(Configuration conf) {
-        return new String[] { 
-        		getFreeTextDocTablename(conf),
-        		getFreeTextTermTablename(conf) };
-     }
+    
+    /**
+     * Get all the tables used by this index.
+     * @param conf configuration map
+     * @return an unmodifiable list of all the table names.
+     */
+    public static List<String> getTableNames(Configuration conf) {
+        return Collections.unmodifiableList( Arrays.asList( 
+                getFreeTextDocTablename(conf),
+                getFreeTextTermTablename(conf) ));
+    }
+    
+    /**
+     * Get the Document index's table name.
+     * @param conf
+     * @return the Free Text Document index table's name
+     */
     public static String getFreeTextDocTablename(Configuration conf) {
-        return mvm.rya.indexing.accumulo.ConfigUtils.getTablePrefix(conf)  + "freetext";
+        return mvm.rya.indexing.accumulo.ConfigUtils.getTablePrefix(conf)  + TABLE_SUFFFIX_DOC;
     }
 
+    /**
+     * Get the Term index's table name.
+     * @param conf
+     * @return the Free Text Term index table's name
+     */
     public static String getFreeTextTermTablename(Configuration conf) {
-        return mvm.rya.indexing.accumulo.ConfigUtils.getTablePrefix(conf)  + "freetext_term";
+        return mvm.rya.indexing.accumulo.ConfigUtils.getTablePrefix(conf)  + TABLE_SUFFIX_TERM;
     }
 
     private void deleteStatement(Statement statement) throws IOException {

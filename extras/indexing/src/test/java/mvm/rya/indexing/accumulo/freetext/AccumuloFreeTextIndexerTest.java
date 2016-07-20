@@ -1,6 +1,7 @@
 package mvm.rya.indexing.accumulo.freetext;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -13,6 +14,7 @@ import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.conf.Configuration;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.openrdf.model.Statement;
@@ -47,7 +49,7 @@ import com.google.common.collect.Sets;
 
 
 import info.aduna.iteration.CloseableIteration;
-import junit.framework.Assert;
+
 import mvm.rya.api.RdfCloudTripleStoreConfiguration;
 import mvm.rya.api.domain.RyaStatement;
 import mvm.rya.api.domain.RyaType;
@@ -73,9 +75,10 @@ public class AccumuloFreeTextIndexerTest {
         conf.set(RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX,"triplestore_");
         
         // If a table exists from last time, delete it.
-        String[] tableNames = AccumuloFreeTextIndexer.getTableNames(conf);
-        for (String name : tableNames)
-        	destroyTable(conf, name);
+        List<String> tableNames = AccumuloFreeTextIndexer.getTableNames(conf);
+        for (String name : tableNames) {
+            destroyTable(conf, name);
+        }
         // Tables are created in each test with setConf(conf)
     }
 

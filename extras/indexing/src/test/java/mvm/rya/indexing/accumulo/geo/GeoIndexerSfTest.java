@@ -26,14 +26,10 @@ import info.aduna.iteration.CloseableIteration;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
-
-import mvm.rya.accumulo.AccumuloRdfConfiguration;
 import mvm.rya.api.RdfCloudTripleStoreConfiguration;
 import mvm.rya.api.domain.RyaStatement;
 import mvm.rya.api.resolver.RdfToRyaConversions;
 import mvm.rya.api.resolver.RyaToRdfConversions;
-import mvm.rya.indexing.GeoIndexer;
 import mvm.rya.indexing.StatementConstraints;
 import mvm.rya.indexing.accumulo.ConfigUtils;
 import mvm.rya.indexing.accumulo.geo.GeoConstants;
@@ -112,10 +108,9 @@ public class GeoIndexerSfTest {
 
     @Before
     public void before() throws Exception {
-        //System.out.println(UUID.randomUUID().toString());
         conf = new Configuration();
         conf.set(RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX, "triplestore_");
-        String tableName = GeoMesaGeoIndexer.getTableName(conf);// was "triplestore_geospacial";
+        String tableName = GeoMesaGeoIndexer.getTableName(conf);
         conf.setBoolean(ConfigUtils.USE_MOCK_INSTANCE, true);
         conf.set(ConfigUtils.CLOUDBASE_USER, "USERNAME");
         conf.set(ConfigUtils.CLOUDBASE_PASSWORD, "PASS");

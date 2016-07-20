@@ -77,6 +77,8 @@ import mvm.rya.indexing.accumulo.ConfigUtils;
 
 public class AccumuloTemporalIndexer extends AbstractAccumuloIndexer implements TemporalIndexer {
 
+    private static final String TABLE_SUFFIX = "temporal";
+
     private static final Logger logger = Logger.getLogger(AccumuloTemporalIndexer.class);
 
     private static final String CF_INTERVAL = "interval";
@@ -878,7 +880,7 @@ public class AccumuloTemporalIndexer extends AbstractAccumuloIndexer implements 
 
     @Override
     public String getTableName() {
-       return ConfigUtils.getTablePrefix(conf)  + "temporal";
+       return ConfigUtils.getTablePrefix(conf)  + TABLE_SUFFIX;
     }
 
     private void deleteStatement(final Statement statement) throws IOException, IllegalArgumentException {
