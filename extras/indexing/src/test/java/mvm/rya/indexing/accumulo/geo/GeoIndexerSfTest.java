@@ -26,6 +26,8 @@ import info.aduna.iteration.CloseableIteration;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import mvm.rya.accumulo.AccumuloRdfConfiguration;
 import mvm.rya.api.RdfCloudTripleStoreConfiguration;
 import mvm.rya.api.domain.RyaStatement;
 import mvm.rya.api.resolver.RdfToRyaConversions;
@@ -36,7 +38,6 @@ import mvm.rya.indexing.accumulo.geo.GeoConstants;
 import mvm.rya.indexing.accumulo.geo.GeoMesaGeoIndexer;
 
 import org.apache.accumulo.core.client.admin.TableOperations;
-import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,7 +65,7 @@ import com.vividsolutions.jts.geom.impl.PackedCoordinateSequence;
  * Tests all of the "simple functions" of the geoindexer.
  */
 public class GeoIndexerSfTest {
-    private static Configuration conf;
+    private static AccumuloRdfConfiguration conf;
     private static GeometryFactory gf = new GeometryFactory(new PrecisionModel(), 4326);
     private static GeoMesaGeoIndexer g;
 
@@ -108,8 +109,8 @@ public class GeoIndexerSfTest {
 
     @Before
     public void before() throws Exception {
-        conf = new Configuration();
-        conf.set(RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX, "triplestore_");
+        conf = new AccumuloRdfConfiguration();
+        conf.setTablePrefix("triplestore_");
         String tableName = GeoMesaGeoIndexer.getTableName(conf);
         conf.setBoolean(ConfigUtils.USE_MOCK_INSTANCE, true);
         conf.set(ConfigUtils.CLOUDBASE_USER, "USERNAME");

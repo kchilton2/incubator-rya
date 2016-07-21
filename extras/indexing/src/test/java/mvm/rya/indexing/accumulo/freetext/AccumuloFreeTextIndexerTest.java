@@ -49,7 +49,7 @@ import com.google.common.collect.Sets;
 
 
 import info.aduna.iteration.CloseableIteration;
-
+import mvm.rya.accumulo.AccumuloRdfConfiguration;
 import mvm.rya.api.RdfCloudTripleStoreConfiguration;
 import mvm.rya.api.domain.RyaStatement;
 import mvm.rya.api.domain.RyaType;
@@ -62,17 +62,17 @@ import mvm.rya.indexing.accumulo.ConfigUtils;
 public class AccumuloFreeTextIndexerTest {
     private static final StatementConstraints EMPTY_CONSTRAINTS = new StatementConstraints();
 
-    Configuration conf;
+    AccumuloRdfConfiguration conf;
 
     @Before
     public void before() throws Exception {
-        conf = new Configuration();
+        conf = new AccumuloRdfConfiguration();
         conf.setBoolean(ConfigUtils.USE_MOCK_INSTANCE, true);
         conf.set(ConfigUtils.CLOUDBASE_USER, "USERNAME");
         conf.set(ConfigUtils.CLOUDBASE_PASSWORD, "PASS");
         conf.set(ConfigUtils.CLOUDBASE_AUTHS, "U");
         conf.setClass(ConfigUtils.TOKENIZER_CLASS, SimpleTokenizer.class, Tokenizer.class);
-        conf.set(RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX,"triplestore_");
+        conf.setTablePrefix("triplestore_");
         
         // If a table exists from last time, delete it.
         List<String> tableNames = AccumuloFreeTextIndexer.getTableNames(conf);

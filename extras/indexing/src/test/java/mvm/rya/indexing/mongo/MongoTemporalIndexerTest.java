@@ -83,7 +83,7 @@ import mvm.rya.mongodb.MongoDBRdfConfiguration;
  *
  */
 public final class MongoTemporalIndexerTest {
-    Configuration conf;
+    MongoDBRdfConfiguration conf;
     MongoTemporalIndexer tIndexer;
     DBCollection collection;
 
@@ -176,12 +176,12 @@ public final class MongoTemporalIndexerTest {
 
     @Before
     public void before() throws Exception {
-        conf = new Configuration();
+        conf = new MongoDBRdfConfiguration();
         conf.set(ConfigUtils.USE_MONGO, "true");
         conf.set(MongoDBRdfConfiguration.USE_TEST_MONGO, "true");
         conf.set(MongoDBRdfConfiguration.MONGO_DB_NAME, "test");
         conf.set(MongoDBRdfConfiguration.MONGO_COLLECTION_PREFIX, "rya_");
-        conf.set(MongoDBRdfConfiguration.CONF_TBL_PREFIX, "isthisused_");
+        conf.setTablePrefix("isthisused_");
         
         // This is from http://linkedevents.org/ontology
         // and http://motools.sourceforge.net/event/event.html

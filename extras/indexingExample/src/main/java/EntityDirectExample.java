@@ -243,7 +243,7 @@ public class EntityDirectExample {
 
         conf.setBoolean(ConfigUtils.USE_MOCK_INSTANCE, USE_MOCK_INSTANCE);
         conf.set(ConfigUtils.USE_ENTITY, "true");
-        conf.set(RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX, RYA_TABLE_PREFIX);
+        conf.setTablePrefix(RYA_TABLE_PREFIX);
         conf.set(ConfigUtils.CLOUDBASE_USER, "root");
         conf.set(ConfigUtils.CLOUDBASE_PASSWORD, "");
         conf.set(ConfigUtils.CLOUDBASE_INSTANCE, INSTANCE);
