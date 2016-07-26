@@ -447,7 +447,7 @@ public class GeoMesaGeoIndexer extends AbstractAccumuloIndexer implements GeoInd
      */
     public static String getTableName(Configuration conf) {
         return ConfigUtils.getTablePrefix(conf)  + TABLE_SUFFIX;
-}
+    }
 
     private void deleteStatements(final Collection<RyaStatement> ryaStatements) throws IOException {
         // create a feature collection
