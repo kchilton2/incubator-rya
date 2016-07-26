@@ -251,8 +251,8 @@ public class MongoRyaDirectExample {
         MongoDBRdfConfiguration conf = new MongoDBRdfConfiguration();
         conf.set(ConfigUtils.USE_MONGO, "true");
         // User name and password must be filled in:
-        conf.set(MongoDBRdfConfiguration.MONGO_USER, null);
-        conf.set(MongoDBRdfConfiguration.MONGO_USER_PASSWORD, null);
+        conf.set(MongoDBRdfConfiguration.MONGO_USER, "fill this in");
+        conf.set(MongoDBRdfConfiguration.MONGO_USER_PASSWORD, "fill this in");
         conf.set(MongoDBRdfConfiguration.USE_TEST_MONGO, "true");
         conf.set(MongoDBRdfConfiguration.MONGO_DB_NAME, MONGO_DB);
         conf.set(MongoDBRdfConfiguration.MONGO_COLLECTION_PREFIX, MONGO_COLL_PREFIX);
