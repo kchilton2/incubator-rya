@@ -439,6 +439,12 @@ public class GeoMesaGeoIndexer extends AbstractAccumuloIndexer implements GeoInd
     public String getTableName() {
             return getTableName(conf);
     }
+
+    /**
+     * Get the Accumulo table that will be used by this index.  
+     * @param conf
+     * @return table name guaranteed to be used by instances of this index
+     */
     public static String getTableName(Configuration conf) {
         return ConfigUtils.getTablePrefix(conf)  + TABLE_SUFFIX;
 }
