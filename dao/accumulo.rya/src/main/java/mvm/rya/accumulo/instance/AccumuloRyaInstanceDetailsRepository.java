@@ -143,8 +143,7 @@ public class AccumuloRyaInstanceDetailsRepository implements RyaDetailsRepositor
                 try {
                     writer.close();
                 } catch (final MutationsRejectedException e) {
-                    // TODO text
-                    throw new RyaDetailsRepositoryException("", e);
+                    throw new RyaDetailsRepositoryException("Could not initialize the Rya instance details for the instance named '" + instanceName + "'.", e);
                 }
             }
         }
