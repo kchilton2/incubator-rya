@@ -36,8 +36,6 @@ import org.openrdf.sail.SailException;
 import com.google.common.base.Optional;
 
 import io.fluo.api.client.FluoClient;
-import io.fluo.api.client.FluoFactory;
-import io.fluo.api.config.FluoConfiguration;
 import mvm.rya.accumulo.AccumuloRdfConfiguration;
 import mvm.rya.accumulo.AccumuloRyaDAO;
 import mvm.rya.accumulo.instance.AccumuloRyaInstanceDetailsRepository;
@@ -59,8 +57,7 @@ import mvm.rya.shell.command.accumulo.AccumuloCommand;
 import mvm.rya.shell.command.accumulo.AccumuloConnectionDetails;
 import mvm.rya.shell.command.administrative.CreatePCJ;
 import mvm.rya.shell.command.administrative.GetInstanceDetails;
-
-// TODO test
+import mvm.rya.shell.util.FluoClientFactory;
 
 /**
  * An Accumulo implementation of the {@link CreatePCJ} command.
@@ -86,22 +83,21 @@ public class AccumuloCreatePCJ extends AccumuloCommand implements CreatePCJ {
         requireNonNull(instanceName);
         requireNonNull(sparql);
 
-        // Ensure the instance of Rya is new enough that it maintains Rya Details that describe its configuration.
         final Optional<RyaDetails> ryaDetailsHolder = getInstanceDetails.getDetails(instanceName);
-        if(!ryaDetailsHolder.isPresent()) {
-            throw new CommandException( String.format("The '%s' instance of Rya appears to be an old version. It does not " +
-                    "have any Rya Details specifying how to maintain the PCJ index, so the PCJ could not be created.", instanceName) );
+        final boolean ryaInstanceExists = ryaDetailsHolder.isPresent();
+        if(!ryaInstanceExists) {
+            throw new InstanceDoesNotExistException(String.format("The '%s' instance of Rya does not exist.", instanceName));
         }
 
-        // Ensure PCJ Indexing is turned on.
         final PCJIndexDetails pcjIndexDetails = ryaDetailsHolder.get().getPCJIndexDetails();
-        if(!pcjIndexDetails.isEnabled()) {
+        final boolean pcjIndexingEnabeld = pcjIndexDetails.isEnabled();
+        if(!pcjIndexingEnabeld) {
             throw new CommandException(String.format("The '%s' instance of Rya does not have PCJ Indexing enabled.", instanceName));
         }
 
-        // Ensure a Fluo application is associated with this instance of Rya.
         final Optional<FluoDetails> fluoDetailsHolder = pcjIndexDetails.getFluoDetails();
-        if(!fluoDetailsHolder.isPresent()) {
+        final boolean usingFluo = fluoDetailsHolder.isPresent();
+        if(!usingFluo) {
             throw new CommandException( String.format("Can not create a PCJ for the '%s' instance of Rya because it does" +
                     "not have a Fluo application associated with it. Update the instance's PCJ Index Details to fix this problem.", instanceName) );
         }
@@ -152,8 +148,14 @@ public class AccumuloCreatePCJ extends AccumuloCommand implements CreatePCJ {
         requireNonNull(pcjStorage);
         requireNonNull(pcjId);
 
-        // Setup the Fluo Client that is able to talk to the fluo updater app.
-        final FluoClient fluoClient = createFluoClient(getAccumuloConnectionDetails(), fluoAppName);
+        // Connect to the Fluo application that is updating this instance's PCJs.
+        final AccumuloConnectionDetails cd = super.getAccumuloConnectionDetails();
+        final FluoClient fluoClient = new FluoClientFactory().connect(
+                cd.getUsername(),
+                new String(cd.getPassword()),
+                cd.getInstanceName(),
+                cd.getZookeepers(),
+                fluoAppName);
 
         // Setup the Rya client that is able to talk to scan Rya's statements.
         final RyaSailRepository ryaSailRepo = makeRyaRepository(getConnector(), ryaInstance);
@@ -161,26 +163,6 @@ public class AccumuloCreatePCJ extends AccumuloCommand implements CreatePCJ {
         // Initialize the PCJ within the Fluo application.
         final org.apache.rya.indexing.pcj.fluo.api.CreatePcj fluoCreatePcj = new org.apache.rya.indexing.pcj.fluo.api.CreatePcj();
         fluoCreatePcj.withRyaIntegration(pcjId, pcjStorage, fluoClient, ryaSailRepo);
-    }
-
-    private static FluoClient createFluoClient(final AccumuloConnectionDetails connectionDetails, final String appName) {
-        requireNonNull(connectionDetails);
-        requireNonNull(appName);
-
-        final FluoConfiguration fluoConfig = new FluoConfiguration();
-
-        // Fluo configuration values.
-        fluoConfig.setApplicationName( appName );
-        fluoConfig.setInstanceZookeepers( connectionDetails.getZookeepers() +  "/fluo" );
-
-        // Accumulo Connection Stuff.
-        fluoConfig.setAccumuloZookeepers( connectionDetails.getZookeepers() );
-        fluoConfig.setAccumuloInstance( connectionDetails.getInstanceName() );
-        fluoConfig.setAccumuloUser( connectionDetails.getUsername() );
-        fluoConfig.setAccumuloPassword( new String(connectionDetails.getPassword()) );
-
-        // Connect the client.
-        return FluoFactory.newClient(fluoConfig);
     }
 
     private static RyaSailRepository makeRyaRepository(final Connector connector, final String ryaInstance) throws RepositoryException {
@@ -191,7 +173,7 @@ public class AccumuloCreatePCJ extends AccumuloCommand implements CreatePCJ {
         final AccumuloRdfConfiguration ryaConf = new AccumuloRdfConfiguration();
         ryaConf.setTablePrefix( ryaInstance );
 
-        // Connect to the Rya repo.
+        // Connect to the Rya repo using the provided Connector.
         final AccumuloRyaDAO accumuloRyaDao = new AccumuloRyaDAO();
         accumuloRyaDao.setConnector(connector);
         accumuloRyaDao.setConf(ryaConf);

@@ -25,6 +25,8 @@ import javax.annotation.concurrent.Immutable;
 
 import org.apache.accumulo.core.client.Connector;
 
+import com.google.common.base.Optional;
+
 import mvm.rya.shell.command.accumulo.AccumuloConnectionDetails;
 import mvm.rya.shell.command.accumulo.administrative.AccumuloCreatePCJ;
 import mvm.rya.shell.command.accumulo.administrative.AccumuloDeletePCJ;
@@ -49,8 +51,8 @@ import mvm.rya.shell.command.administrative.Uninstall;
 public class RyaCommands {
     // Administrative commands that may be invoked. These are initialized whenever a store is connected to.
     private final Install install;
-    private final CreatePCJ createPcj;
-    private final DeletePCJ deletePcj;
+    private final Optional<CreatePCJ> createPcj;
+    private final Optional<DeletePCJ> deletePcj;
     private final GetInstanceDetails getInstanceDetails;
     private final InstanceExists instanceExists;
     private final ListInstances listInstances;
@@ -61,8 +63,8 @@ public class RyaCommands {
      */
     private RyaCommands(
             final Install install,
-            final CreatePCJ createPcj,
-            final DeletePCJ deletePcj,
+            final Optional<CreatePCJ> createPcj,
+            final Optional<DeletePCJ> deletePcj,
             final GetInstanceDetails getInstanceDetails,
             final InstanceExists instanceExists,
             final ListInstances listInstances,
@@ -84,16 +86,18 @@ public class RyaCommands {
     }
 
     /**
-     * @return An instance of {@link CreatePCJ} that is connected to a Rya storage.
+     * @return An instance of {@link CreatePCJ} that is connected to a Rya storage
+     *   if the Rya instance supports PCJ indexing.
      */
-    public CreatePCJ getCreatePCJ() {
+    public Optional<CreatePCJ> getCreatePCJ() {
         return createPcj;
     }
 
     /**
-     * @return An instance of {@link DeletePCJ} that is connected to a Rya storage.
+     * @return An instance of {@link DeletePCJ} that is connected to a Rya storage
+     *   if the Rya instance supports PCJ indexing.
      */
-    public DeletePCJ getDeletePCJ() {
+    public Optional<DeletePCJ> getDeletePCJ() {
         return deletePcj;
     }
 
@@ -138,10 +142,11 @@ public class RyaCommands {
         requireNonNull(connectionDetails);
         requireNonNull(connector);
 
+        // Build the RyaCommands option with the initialized commands.
         return new RyaCommands(
                 new AccumuloInstall(connectionDetails, connector),
-                new AccumuloCreatePCJ(connectionDetails, connector),
-                new AccumuloDeletePCJ(connectionDetails, connector),
+                Optional.<CreatePCJ>of( new AccumuloCreatePCJ(connectionDetails, connector) ),
+                Optional.<DeletePCJ>of( new AccumuloDeletePCJ(connectionDetails, connector) ),
                 new AccumuloGetInstanceDetails(connectionDetails, connector),
                 new AccumuloInstanceExists(connectionDetails, connector),
                 new AccumuloListInstances(connectionDetails, connector),

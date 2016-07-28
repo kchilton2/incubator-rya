@@ -69,12 +69,11 @@ public class RyaAdminCommandsTest {
         final String instanceName = "unitTest";
         final String sparql = "SELECT * WHERE { ?person <http://isA> ?noun }";
         final String pcjId = "123412342";
-        final PCJUpdateStrategy updateStrategy = PCJUpdateStrategy.INCREMENTAL;
         final CreatePCJ mockCreatePCJ = mock(CreatePCJ.class);
         when(mockCreatePCJ.createPCJ( eq(instanceName), eq(sparql) ) ).thenReturn( pcjId );
 
         final RyaCommands mockCommands = mock(RyaCommands.class);
-        when(mockCommands.getCreatePCJ()).thenReturn(mockCreatePCJ);
+        when(mockCommands.getCreatePCJ()).thenReturn( Optional.of(mockCreatePCJ));
 
         final SharedShellState state = new SharedShellState();
         state.connectedToAccumulo(mock(AccumuloConnectionDetails.class), mockCommands);
@@ -98,7 +97,7 @@ public class RyaAdminCommandsTest {
         final DeletePCJ mockDeletePCJ = mock(DeletePCJ.class);
 
         final RyaCommands mockCommands = mock(RyaCommands.class);
-        when(mockCommands.getDeletePCJ()).thenReturn( mockDeletePCJ );
+        when(mockCommands.getDeletePCJ()).thenReturn( Optional.of(mockDeletePCJ) );
 
         final SharedShellState state = new SharedShellState();
         state.connectedToAccumulo(mock(AccumuloConnectionDetails.class), mockCommands);

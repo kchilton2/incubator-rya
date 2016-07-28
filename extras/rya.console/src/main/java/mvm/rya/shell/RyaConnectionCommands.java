@@ -126,6 +126,12 @@ public class RyaConnectionCommands implements CommandMarker {
             final char[] password = passwordPrompt.getPassword();
             final Connector connector= new ConnectorFactory().connect(username, CharBuffer.wrap(password), instanceName, zookeepers);
 
+            // TODO make a fluo client here and pass it in.
+            // HMM i want this to be lazy though. don't connect until we need to. so use a supplier?
+            // or an atomic reference? like, the app name should be fetched from the details for the instance
+            // also. and we should only show the pcj commands as available if the fluo app is in
+            // the details. or like if it's enabled in the details also.
+
             // Initialize the connected to Accumulo shared state.
             final AccumuloConnectionDetails accumuloDetails = new AccumuloConnectionDetails(username, password, instanceName, zookeepers);
             final RyaCommands commands = RyaCommands.buildAccumuloCommands(accumuloDetails, connector);

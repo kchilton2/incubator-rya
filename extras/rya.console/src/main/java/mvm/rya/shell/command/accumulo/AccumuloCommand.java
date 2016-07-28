@@ -33,7 +33,6 @@ public abstract class AccumuloCommand {
 
     private final AccumuloConnectionDetails connectionDetails;
     private final Connector connector;
-//    private final Authorizations auths;
 
     /**
      * Constructs an instance of {@link AccumuloCommand}.
@@ -41,17 +40,12 @@ public abstract class AccumuloCommand {
      * Details about the values that were used to create the connector to the cluster. (not null)
      * @param connector - Provides programatic access to the instance of Accumulo
      *   that hosts Rya instance. (not null)
-//     * @param auths - The authorizations that will be used when interacting with
-//     *   the instance of Accumulo. (not null)
      */
     public AccumuloCommand(
             final AccumuloConnectionDetails connectionDetails,
-            final Connector connector//,
-            //final Authorizations auths
-            ) {
+            final Connector connector) {
         this.connectionDetails = requireNonNull( connectionDetails );
         this.connector = requireNonNull(connector);
-//        this.auths = requireNonNull(auths);
     }
 
     /**
@@ -67,12 +61,4 @@ public abstract class AccumuloCommand {
     public Connector getConnector() {
         return connector;
     }
-
-//    /**
-//     * @return The authorizations that will be used when interacting with
-//     *   the instance of Accumulo.
-//     */
-//    public Authorizations getAuths() {
-//        return auths;
-//    }
 }

@@ -21,8 +21,10 @@ package mvm.rya.shell.command.accumulo.administrative;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import java.util.List;
 import java.util.Set;
 
+import org.apache.rya.indexing.pcj.fluo.api.ListQueryIds;
 import org.apache.rya.indexing.pcj.storage.PcjMetadata;
 import org.apache.rya.indexing.pcj.storage.PrecomputedJoinStorage;
 import org.apache.rya.indexing.pcj.storage.accumulo.AccumuloPcjStorage;
@@ -84,6 +86,10 @@ public class AccumuloCreatePCJIT extends FluoITBase {
         final PcjMetadata pcjMetadata = pcjStorage.getPcjMetadata(pcjId);
         assertEquals(sparql, pcjMetadata.getSparql());
         assertEquals(0L, pcjMetadata.getCardinality());
+
+        // Verify a Query ID was added for the query within the Fluo app.
+        final List<String> fluoQueryIds = new ListQueryIds().listQueryIds(fluoClient);
+        assertEquals(1, fluoQueryIds.size());
 
         // Insert some statements into Rya.
         final ValueFactory vf = ryaRepo.getValueFactory();

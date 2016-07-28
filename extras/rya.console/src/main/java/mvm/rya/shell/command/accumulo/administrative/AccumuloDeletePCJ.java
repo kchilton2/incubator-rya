@@ -23,6 +23,7 @@ import static java.util.Objects.requireNonNull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.apache.accumulo.core.client.Connector;
+import org.apache.rya.indexing.pcj.fluo.api.DeletePcj;
 import org.apache.rya.indexing.pcj.storage.PrecomputedJoinStorage;
 import org.apache.rya.indexing.pcj.storage.PrecomputedJoinStorage.PCJStorageException;
 import org.apache.rya.indexing.pcj.storage.accumulo.AccumuloPcjStorage;
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 
+import io.fluo.api.client.FluoClient;
 import mvm.rya.api.instance.RyaDetails;
 import mvm.rya.api.instance.RyaDetails.PCJIndexDetails;
 import mvm.rya.api.instance.RyaDetails.PCJIndexDetails.FluoDetails;
@@ -42,8 +44,7 @@ import mvm.rya.shell.command.accumulo.AccumuloCommand;
 import mvm.rya.shell.command.accumulo.AccumuloConnectionDetails;
 import mvm.rya.shell.command.administrative.DeletePCJ;
 import mvm.rya.shell.command.administrative.GetInstanceDetails;
-
-// TODO impl, test
+import mvm.rya.shell.util.FluoClientFactory;
 
 /**
  * An Accumulo implementation of the {@link DeletePCJ} command.
@@ -71,32 +72,35 @@ public class AccumuloDeletePCJ extends AccumuloCommand implements DeletePCJ {
         requireNonNull(instanceName);
         requireNonNull(pcjId);
 
-        // Only newer instance of Rya maintain details about how they are configured.
-        // These are also the only instances that use Fluo to maintain PCJs. If details
-        // are present, then update them to exclude the deleted PCJ. If that PCJ is also
-        // being maintained by Fluo, then also remove it from the Fluo app.
         final Optional<RyaDetails> originalDetails = getInstanceDetails.getDetails(instanceName);
-        if(originalDetails.isPresent()) {
+        final boolean ryaInstanceExists = originalDetails.isPresent();
+        if(!ryaInstanceExists) {
+            throw new InstanceDoesNotExistException(String.format("The '%s' instance of Rya does not exist.", instanceName));
+        }
 
-            // Only continue if PCJ Indexing is enabled.
-            if(!originalDetails.get().getPCJIndexDetails().isEnabled()) {
-                throw new CommandException(String.format("The '%s' instance of Rya does not have PCJ Indexing enabled.", instanceName));
-            }
+        final boolean pcjIndexingEnabeld = originalDetails.get().getPCJIndexDetails().isEnabled();
+        if(!pcjIndexingEnabeld) {
+            throw new CommandException(String.format("The '%s' instance of Rya does not have PCJ Indexing enabled.", instanceName));
+        }
 
-            // If the PCJ was being maintained by a Fluo application, then stop that process.
-            final PCJIndexDetails pcjIndexDetails  = originalDetails.get().getPCJIndexDetails();
-            final PCJDetails droppedPcjDetails = pcjIndexDetails.getPCJDetails().get( pcjId );
-            if(droppedPcjDetails.getUpdateStrategy().isPresent()) {
-                if(droppedPcjDetails.getUpdateStrategy().get() == PCJUpdateStrategy.INCREMENTAL) {
-                    final Optional<FluoDetails> fluoDetailsHolder = pcjIndexDetails.getFluoDetails();
+        final boolean pcjExists = originalDetails.get().getPCJIndexDetails().getPCJDetails().containsKey( pcjId );
+        if(!pcjExists) {
+            throw new CommandException(String.format("The '%s' instance of Rya does not have PCJ with ID '%s'.", instanceName, pcjId));
+        }
 
-                    if(fluoDetailsHolder.isPresent()) {
-                        final String fluoAppName = pcjIndexDetails.getFluoDetails().get().getUpdateAppName();
-                        stopUpdatingPCJ(fluoAppName, pcjId);
-                    } else {
-                        log.error(String.format("Could not stop the Fluo application from updating the PCJ because the Fluo Details are " +
-                                "missing for the Rya instance named '%s'.", instanceName));
-                    }
+        // If the PCJ was being maintained by a Fluo application, then stop that process.
+        final PCJIndexDetails pcjIndexDetails  = originalDetails.get().getPCJIndexDetails();
+        final PCJDetails droppedPcjDetails = pcjIndexDetails.getPCJDetails().get( pcjId );
+        if(droppedPcjDetails.getUpdateStrategy().isPresent()) {
+            if(droppedPcjDetails.getUpdateStrategy().get() == PCJUpdateStrategy.INCREMENTAL) {
+                final Optional<FluoDetails> fluoDetailsHolder = pcjIndexDetails.getFluoDetails();
+
+                if(fluoDetailsHolder.isPresent()) {
+                    final String fluoAppName = pcjIndexDetails.getFluoDetails().get().getUpdateAppName();
+                    stopUpdatingPCJ(fluoAppName, pcjId);
+                } else {
+                    log.error(String.format("Could not stop the Fluo application from updating the PCJ because the Fluo Details are " +
+                            "missing for the Rya instance named '%s'.", instanceName));
                 }
             }
         }
@@ -110,8 +114,20 @@ public class AccumuloDeletePCJ extends AccumuloCommand implements DeletePCJ {
         }
     }
 
-    private void stopUpdatingPCJ(final String fluoApp, final String pcjId) {
-        // TODO impl this
-        // WE HAVE A PROBLEM HERE. THE FLUO APPLICATION DOES NOT SUPPORT THIS AT THE MOMENT!
+    private void stopUpdatingPCJ(final String fluoAppName, final String pcjId) {
+        requireNonNull(fluoAppName);
+        requireNonNull(pcjId);
+
+        // Connect to the Fluo application that is updating this instance's PCJs.
+        final AccumuloConnectionDetails cd = super.getAccumuloConnectionDetails();
+        final FluoClient fluoClient = new FluoClientFactory().connect(
+                cd.getUsername(),
+                new String(cd.getPassword()),
+                cd.getInstanceName(),
+                cd.getZookeepers(),
+                fluoAppName);
+
+        // Delete the PCJ from the Fluo App.
+        new DeletePcj(1000).deletePcj(fluoClient, pcjId);
     }
 }
