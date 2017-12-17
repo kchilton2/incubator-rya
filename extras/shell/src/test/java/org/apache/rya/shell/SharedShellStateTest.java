@@ -57,7 +57,7 @@ public class SharedShellStateTest {
         // Verify the state.
         final ShellState expected = ShellState.builder()
                 .setConnectionState(ConnectionState.CONNECTED_TO_STORAGE)
-                .setAccumuloConnectionDetails(connectionDetails)
+                .setAccumuloDetails(connectionDetails)
                 .setConnectedCommands(connectedCommands)
                 .build();
 
@@ -92,7 +92,7 @@ public class SharedShellStateTest {
         // Verify the state.
         final ShellState expected = ShellState.builder()
                 .setConnectionState(ConnectionState.CONNECTED_TO_INSTANCE)
-                .setAccumuloConnectionDetails(connectionDetails)
+                .setAccumuloDetails(connectionDetails)
                 .setConnectedCommands(connectedCommands)
                 .setRyaInstanceName("instance")
                 .build();
@@ -118,7 +118,7 @@ public class SharedShellStateTest {
         // Verify the state.
         final ShellState expected = ShellState.builder()
                 .setConnectionState(ConnectionState.CONNECTED_TO_INSTANCE)
-                .setAccumuloConnectionDetails(connectionDetails)
+                .setAccumuloDetails(connectionDetails)
                 .setConnectedCommands(connectedCommands)
                 .setRyaInstanceName("secondInstance")
                 .build();

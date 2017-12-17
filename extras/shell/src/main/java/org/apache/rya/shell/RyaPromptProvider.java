@@ -50,10 +50,10 @@ public class RyaPromptProvider extends DefaultPromptProvider {
             case DISCONNECTED:
                 return "rya> ";
             case CONNECTED_TO_STORAGE:
-                return String.format("rya/%s> ", state.getConnectionDetails().get().getInstanceName());
+                return String.format("rya/%s> ", state.getAccumuloDetails().get().getInstanceName());
             case CONNECTED_TO_INSTANCE:
                 return String.format("rya/%s:%s> ",
-                        state.getConnectionDetails().get().getInstanceName(),
+                        state.getAccumuloDetails().get().getInstanceName(),
                         state.getRyaInstanceName().get());
             default:
                 return "rya> ";

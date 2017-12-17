@@ -52,6 +52,7 @@ public class RyaConnectionCommands implements CommandMarker {
     // Command line commands.
     public static final String PRINT_CONNECTION_DETAILS_CMD = "print-connection-details";
     public static final String CONNECT_ACCUMULO_CMD = "connect-accumulo";
+    public static final String CONNECT_MONGO_CMD = "connect-mongo";
     public static final String CONNECT_INSTANCE_CMD = "connect-rya";
     public static final String DISCONNECT_COMMAND_NAME_CMD = "disconnect";
 
@@ -98,7 +99,7 @@ public class RyaConnectionCommands implements CommandMarker {
 
     @CliCommand(value = PRINT_CONNECTION_DETAILS_CMD, help = "Print information about the Shell's Rya storage connection.")
     public String printConnectionDetails() {
-        final Optional<AccumuloConnectionDetails> detailsHolder = sharedState.getShellState().getConnectionDetails();
+        final Optional<AccumuloConnectionDetails> detailsHolder = sharedState.getShellState().getAccumuloDetails();
 
         if(detailsHolder.isPresent()) {
             final AccumuloConnectionDetails details = detailsHolder.get();
@@ -134,6 +135,33 @@ public class RyaConnectionCommands implements CommandMarker {
         } catch(IOException | AccumuloException | AccumuloSecurityException e) {
             throw new RuntimeException("Could not connect to Accumulo. Reason: " + e.getMessage(), e);
         }
+
+        return "Connected. You must select a Rya instance to interact with next.";
+    }
+
+    @CliCommand(value = CONNECT_MONGO_CMD, help = "Connect the shell to an instance of MongoDB.")
+    public String connectToMongo(
+            @CliOption(key = {"username"}, mandatory = true, help = "The username that will be used to connect to MongoDB.")
+            final String username,
+            @CliOption(key= {"hostname"}, mandatory = true, help = "The hostname of the MongoDB that will be connected to.")
+            final String hostname,
+
+            final int port) {
+
+        // Propmt the user for their password.
+        try {
+            final char[] password = passwordPrompt.getPassword();
+
+            // TODO CONNECT TO MONGODB BY MAKING A MONGO CLIENT.
+
+            // Initialize the connected to Mongo shared state.
+
+
+        } catch (final IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
 
         return "Connected. You must select a Rya instance to interact with next.";
     }
