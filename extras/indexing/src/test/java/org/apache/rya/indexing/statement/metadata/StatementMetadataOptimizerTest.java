@@ -132,7 +132,7 @@ public class StatementMetadataOptimizerTest {
         if (useMongo) {
             MongoDBRdfConfiguration mConf = new MongoDBRdfConfiguration();
             mConf.setBoolean("sc.useMongo", true);
-            mConf.setMongoInstance("localhost");
+            mConf.setMongoHostname("localhost");
             mConf.setMongoPort("27017");
             mConf.setMongoDBName("rya_");
             conf = mConf;

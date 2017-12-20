@@ -43,7 +43,7 @@ public class MongoInstallIT extends MongoTestBase {
     @Test
     public void install() throws DuplicateInstanceNameException, RyaClientException {
         // Install an instance of Rya.
-        final String ryaInstance = conf.getCollectionName();
+        final String ryaInstance = conf.getRyaInstance();
 
         // Setup the connection details that were used for the embedded Mongo DB instance we are testing with.
         final MongoConnectionDetails connectionDetails = getConnectionDetails();
@@ -82,7 +82,7 @@ public class MongoInstallIT extends MongoTestBase {
     @Test(expected = DuplicateInstanceNameException.class)
     public void install_alreadyExists() throws DuplicateInstanceNameException, RyaClientException {
         // Install an instance of Rya.
-        final String instanceName = conf.getCollectionName();
+        final String instanceName = conf.getRyaInstance();
         final InstallConfiguration installConfig = InstallConfiguration.builder().build();
 
         final MongoConnectionDetails connectionDetails = getConnectionDetails();
@@ -94,12 +94,12 @@ public class MongoInstallIT extends MongoTestBase {
         install.install(instanceName, installConfig);
     }
 
-    private MongoConnectionDetails getConnectionDetails() {//
-        return new MongoConnectionDetails(//
-                        conf.getMongoUser(), //
-                        conf.getMongoPassword().toCharArray(), //
-                        conf.getMongoInstance(), //
-                        Integer.parseInt(conf.getMongoPort()), //
-                        conf.getMongoDBName());
+    /**
+     * @return copy from conf to MongoConnectionDetails
+     */
+    private MongoConnectionDetails getConnectionDetails() {
+        return new MongoConnectionDetails(
+                        conf.getMongoHostname(),
+                        Integer.parseInt(conf.getMongoPort()));
     }
 }

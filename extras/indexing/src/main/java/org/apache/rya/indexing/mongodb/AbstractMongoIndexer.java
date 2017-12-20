@@ -101,8 +101,8 @@ public abstract class AbstractMongoIndexer<T extends IndexingMongoDBStorageStrat
     public void initIndexer(final Configuration conf, final MongoClient client) {
         setClient(client);
         final ServerAddress address = client.getAddress();
-        conf.set(MongoDBRdfConfiguration.MONGO_INSTANCE, address.getHost());
-        conf.set(MongoDBRdfConfiguration.MONGO_INSTANCE_PORT, Integer.toString(address.getPort()));
+        conf.set(MongoDBRdfConfiguration.MONGO_HOSTNAME, address.getHost());
+        conf.set(MongoDBRdfConfiguration.MONGO_PORT, Integer.toString(address.getPort()));
         setConf(conf);
         if (!isInit) {
             init();

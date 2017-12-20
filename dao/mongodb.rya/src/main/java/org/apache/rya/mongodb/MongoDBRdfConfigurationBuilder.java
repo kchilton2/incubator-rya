@@ -18,15 +18,14 @@
  */
 package org.apache.rya.mongodb;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.Properties;
 
 /**
- * This is a concrete extension of the
- * {@link AbstractMongoDBRdfConfigurationBuilder} class which builds an
- * {@link MongoDBRdfConfiguration} object. This builder creates an
- * MongoDBRdfConfiguratio object and sets all of the parameters required to
- * connect to an Mongo Rya instance.
- *
+ * An implementation of {@link AbstractMongoDBRdfConfigurationBuilder} that builds instances of
+ * {@link MongoDBRdfConfiguration} and sets all of the parameters required to connect to a
+ * MongoDB Rya instance.
  */
 public class MongoDBRdfConfigurationBuilder
         extends AbstractMongoDBRdfConfigurationBuilder<MongoDBRdfConfigurationBuilder, MongoDBRdfConfiguration> {
@@ -35,61 +34,49 @@ public class MongoDBRdfConfigurationBuilder
      * Creates a MongoRdfConfiguration object from a Properties file. This
      * method assumes that all values in the Properties file are Strings and
      * that the Properties file uses the keys below.
-     * 
-     * <br>
+     * <br/>
      * <ul>
-     * <li>"mongo.auths" - String of Mongo authorizations. Empty auths used by
-     * default.
-     * <li>"mongo.visibilities" - String of Mongo visibilities assigned to
-     * ingested triples.
-     * <li>"mongo.user" - Mongo user. Empty by default.
-     * <li>"mongo.password" - Mongo password. Empty by default.
-     * <li>"mongo.host" - Mongo host. Default host is "localhost"
-     * <li>"mongo.port" - Mongo port. Default port is "27017".
-     * <li>"mongo.db.name" - Name of MongoDB. Default name is "rya_triples".
-     * <li>"mongo.collection.prefix" - Mongo collection prefix. Default is
-     * "rya_".
-     * <li>"mongo.rya.prefix" - Prefix for Mongo Rya instance. Same as value of
-     * "mongo.collection.prefix".
-     * <li>"use.mock" - Use a Embedded Mongo instance as back-end for Rya
-     * instance. False by default.
-     * <li>"use.display.plan" - Display query plan during evaluation. Useful for
-     * debugging. True by default.
-     * <li>"use.inference" - Use backward chaining inference during query. False
-     * by default.
+     *   <li>"mongo.auths" - String of Mongo authorizations. Empty auths used by default.
+     *   <li>"mongo.visibilities" - String of Mongo visibilities assigned to ingested triples.
+     *   <li>"mongo.user" - Mongo user. Empty by default.
+     *   <li>"mongo.password" - Mongo password. Empty by default.
+     *   <li>"mongo.host" - Mongo host. Default host is "localhost"
+     *   <li>"mongo.port" - Mongo port. Default port is "27017".
+     *   <li>"mongo.db.name" - Name of MongoDB. Default name is "rya_triples".
+     *   <li>"mongo.collection.prefix" - Mongo collection prefix. Default is "rya_".
+     *   <li>"mongo.rya.prefix" - Prefix for Mongo Rya instance. Same as value of "mongo.collection.prefix".
+     *   <li>"use.mock" - Use a Embedded Mongo instance as back-end for Rya instance. False by default.
+     *   <li>"use.display.plan" - Display query plan during evaluation. Useful for debugging. True by default.
+     *   <li>"use.inference" - Use backward chaining inference during query. False by default.
      * </ul>
-     * <br>
-     * 
-     * @param props
-     *            - Properties file containing Mongo specific configuration
-     *            parameters
+     *
+     * @param props - Properties file containing Mongo specific configuration parameters. (not null)
      * @return MongoRdfConfiguration with properties set
      */
-    public static MongoDBRdfConfiguration fromProperties(Properties props) {
+    public static MongoDBRdfConfiguration fromProperties(final Properties props) {
+        requireNonNull(props);
         try {
-
-            MongoDBRdfConfigurationBuilder builder = new MongoDBRdfConfigurationBuilder() //
-                    .setAuths(props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_AUTHS, "")) //
-                    .setRyaPrefix(props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_RYA_PREFIX, "rya_"))//
+            final MongoDBRdfConfigurationBuilder builder = new MongoDBRdfConfigurationBuilder()
+                    .setAuths(props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_AUTHS, ""))
+                    .setRyaPrefix(props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_RYA_PREFIX, "rya_"))
                     .setVisibilities(props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_VISIBILITIES, ""))
                     .setUseInference(getBoolean(
-                            props.getProperty(AbstractMongoDBRdfConfigurationBuilder.USE_INFERENCE, "false")))//
+                            props.getProperty(AbstractMongoDBRdfConfigurationBuilder.USE_INFERENCE, "false")))
                     .setDisplayQueryPlan(getBoolean(
-                            props.getProperty(AbstractMongoDBRdfConfigurationBuilder.USE_DISPLAY_QUERY_PLAN, "true")))//
-                    .setMongoUser(props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_USER)) //
-                    .setMongoPassword(props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_PASSWORD))//
+                            props.getProperty(AbstractMongoDBRdfConfigurationBuilder.USE_DISPLAY_QUERY_PLAN, "true")))
+                    .setMongoUser(props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_USER))
+                    .setMongoPassword(props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_PASSWORD))
                     .setMongoCollectionPrefix(
-                            props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_COLLECTION_PREFIX, "rya_"))//
+                            props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_COLLECTION_PREFIX, "rya_"))
                     .setMongoDBName(
-                            props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_DB_NAME, "rya_triples"))//
-                    .setMongoHost(props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_HOST, "localhost"))//
+                            props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_DB_NAME, "rya_triples"))
+                    .setMongoHost(props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_HOST, "localhost"))
                     .setMongoPort(props.getProperty(AbstractMongoDBRdfConfigurationBuilder.MONGO_PORT,
-                            AbstractMongoDBRdfConfigurationBuilder.DEFAULT_MONGO_PORT))//
+                            AbstractMongoDBRdfConfigurationBuilder.DEFAULT_MONGO_PORT))
                     .setUseMockMongo(getBoolean(
                             props.getProperty(AbstractMongoDBRdfConfigurationBuilder.USE_MOCK_MONGO, "false")));
-
             return builder.build();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -103,5 +90,4 @@ public class MongoDBRdfConfigurationBuilder
     protected MongoDBRdfConfiguration createConf() {
         return new MongoDBRdfConfiguration();
     }
-
 }

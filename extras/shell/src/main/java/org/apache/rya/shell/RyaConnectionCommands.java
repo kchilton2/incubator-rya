@@ -124,8 +124,7 @@ public class RyaConnectionCommands implements CommandMarker {
                 final MongoConnectionDetails mongoDetails = sharedState.getShellState().getMongoDetails().get();
                 return "The shell is connected to an instance of MongoDB using the following parameters:\n" +
                     "    Hostname: "  + mongoDetails.getHostname() + "\n" +
-                    "    Port: " + mongoDetails.getPort() + "\n" +
-                    "    Username:" + mongoDetails.getUsername();
+                    "    Port: " + mongoDetails.getPort() + "\n";
 
             default:
                 throw new RuntimeException("Unrecognized StorageType: " + storageType.get());
@@ -174,7 +173,7 @@ public class RyaConnectionCommands implements CommandMarker {
 
             // Set up a configuration file that connects to the specified Mongo DB.
             final MongoDBRdfConfiguration conf = new MongoDBRdfConfiguration();
-            conf.setMongoInstance(hostname);
+            conf.setMongoHostname(hostname);
             conf.setMongoPort(port);
             conf.setMongoUser(username);
             conf.setMongoPassword(new String(password));
@@ -191,7 +190,7 @@ public class RyaConnectionCommands implements CommandMarker {
             });
 
             // Initialize the connected to Mongo shared state.
-            final MongoConnectionDetails connectionDetails = new MongoConnectionDetails(username, password, hostname, Integer.parseInt(port));
+            final MongoConnectionDetails connectionDetails = new MongoConnectionDetails(hostname, Integer.parseInt(port));
             final RyaClient ryaClient = MongoRyaClientFactory.build(connectionDetails, client);
             sharedState.connectedToMongo(connectionDetails, ryaClient);
 

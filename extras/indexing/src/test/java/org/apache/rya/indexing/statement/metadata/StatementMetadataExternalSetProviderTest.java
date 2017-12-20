@@ -147,7 +147,7 @@ public class StatementMetadataExternalSetProviderTest {
         if (useMongo) {
             MongoDBRdfConfiguration conf = new MongoDBRdfConfiguration();
             conf.setBoolean("sc.useMongo", true);
-            conf.setMongoInstance("localhost");
+            conf.setMongoHostname("localhost");
             conf.setMongoPort("27017");
             conf.setMongoDBName("rya_");
             return conf;

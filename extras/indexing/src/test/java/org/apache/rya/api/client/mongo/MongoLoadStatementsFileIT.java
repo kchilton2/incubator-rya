@@ -60,17 +60,17 @@ public class MongoLoadStatementsFileIT extends MongoTestBase {
                         .setEnablePcjIndex(false)//
                         .setEnableGeoIndex(false)//
                         .build();
-        MongoConnectionDetails connectionDetails = getConnectionDetails();
+        final MongoConnectionDetails connectionDetails = getConnectionDetails();
         final RyaClient ryaClient = MongoRyaClientFactory.build(connectionDetails, conf.getMongoClient());
         final Install install = ryaClient.getInstall();
-        install.install(conf.getCollectionName(), installConfig);
+        install.install(conf.getRyaInstance(), installConfig);
 
         // Load the test statement file.
         ryaClient.getLoadStatementsFile()
                         // LoadStatementsFile loadStatementsFile = new MongoLoadStatementsFile(connectionDetails, getMongoClient());
                         // loadStatementsFile
                         .loadStatements( //
-                        conf.getCollectionName(), //
+                        conf.getRyaInstance(), //
                         Paths.get("src/test/resources/example.ttl"), //
                         RDFFormat.TURTLE);
 
@@ -83,10 +83,10 @@ public class MongoLoadStatementsFileIT extends MongoTestBase {
         expected.add(vf.createStatement(vf.createURI("http://example#charlie"), vf.createURI("http://example#likes"), vf.createURI("http://example#icecream")));
 
         final List<Statement> statements = new ArrayList<>();
-        MongoCursor<Document> x = getRyaCollection().find().iterator();
+        final MongoCursor<Document> x = getRyaCollection().find().iterator();
         System.out.println("getRyaCollection().count()=" + getRyaCollection().count());
         while (x.hasNext()) {
-            Document y = x.next();
+            final Document y = x.next();
             System.out.println("getRyaCollection()=" + y);
         }
         assertEquals("Expect all rows to be read.", 3, getRyaCollection().count());
@@ -122,11 +122,8 @@ public class MongoLoadStatementsFileIT extends MongoTestBase {
      * @return copy from conf to MongoConnectionDetails
      */
     private MongoConnectionDetails getConnectionDetails() {
-        return new MongoConnectionDetails(//
-                        conf.getMongoUser(), //
-                        conf.getMongoPassword().toCharArray(), //
-                        conf.getMongoInstance(), //
-                        Integer.parseInt(conf.getMongoPort()), //
-                        conf.getMongoDBName());
+        return new MongoConnectionDetails(
+                        conf.getMongoHostname(),
+                        Integer.parseInt(conf.getMongoPort()));
     }
 }

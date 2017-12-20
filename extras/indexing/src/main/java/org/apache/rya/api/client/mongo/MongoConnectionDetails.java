@@ -30,50 +30,25 @@ import edu.umd.cs.findbugs.annotations.DefaultAnnotation;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
- * The information the shell used to connect to Mongo DB.
+ * The information the shell used to connect to Mongo DB server.
  */
 @DefaultAnnotation(NonNull.class)
 public class MongoConnectionDetails {
 
-    private final String username;
-    private final char[] userPass;
     private final String hostname;
     private final int port;
-    private String mongoDBName;
 
     /**
      * Constructs an instance of {@link MongoConnectionDetails}.
      *
-     * @param username - The username that was used to establish the connection. (not null)
-     * @param password - The password that was used to establish the connection. (not null)
      * @param hostname - The hostname of the Mongo DB that was connected to. (not null)
      * @param port - The port of the Mongo DB that was connected to.
      */
-    public MongoConnectionDetails( //
-                    final String username, //
-                    final char[] userPass, //
-                    final String hostname, //
-                    final int port, //
-                    String mongoDBName) {
-        this.username = requireNonNull(username);
-        this.userPass = requireNonNull(userPass);
+    public MongoConnectionDetails(
+                    final String hostname,
+                    final int port) {
         this.hostname = requireNonNull(hostname);
         this.port = port;
-        this.mongoDBName = mongoDBName;
-    }
-
-    /**
-     * @return The username that was used to establish the connection.
-     */
-    public String getUsername() {
-        return this.username;
-    }
-
-    /**
-     * @return The password that was used to establish the connection.
-     */
-    public char[] getPassword() {
-        return this.userPass;
     }
 
     /**
@@ -88,13 +63,6 @@ public class MongoConnectionDetails {
      */
     public int getPort() {
         return port;
-    }
-
-    /**
-     * @return The hostname of the Mongo DB that was connected to.
-     */
-    public String getDBName() {
-        return mongoDBName;
     }
 
     /**
@@ -114,12 +82,10 @@ public class MongoConnectionDetails {
         // If they are null in the MongoRdfConfiguration object, it may do the right thing.
         final MongoDBRdfConfiguration conf = new MongoDBRdfConfiguration();
         conf.setBoolean(ConfigUtils.USE_MONGO, true);
-        conf.setMongoInstance(hostname);
+        conf.setMongoHostname(hostname);
         conf.setMongoPort("" + port);
-        conf.setMongoUser(username);
-        conf.setMongoPassword(new String(userPass));
 
-        conf.setCollectionName(ryaInstanceName);
+        conf.setRyaInstance(ryaInstanceName);
         // Both of these are ways to configure the collection prefixes.
         conf.setMongoDBName(ryaInstanceName);
         conf.set(RdfCloudTripleStoreConfiguration.CONF_TBL_PREFIX, ryaInstanceName);

@@ -274,8 +274,8 @@ public abstract class RdfCloudTripleStoreConfiguration extends Configuration {
     }
 
     /**
-     * @return
-     * @deprecated
+     * @return A comma delimited list of authorizations used to access data in Rya.
+     * @deprecated Use {@link #getAuths()} instead.
      */
     @Deprecated
     public String getAuth() {
@@ -283,8 +283,8 @@ public abstract class RdfCloudTripleStoreConfiguration extends Configuration {
     }
 
     /**
-     * @param auth
-     * @deprecated
+     * @param auth - A comma delimited list of authorizations used to access data in Rya.
+     * @deprecated Use {@link #setAuths(String...)} instead.
      */
     @Deprecated
     public void setAuth(final String auth) {
@@ -292,10 +292,16 @@ public abstract class RdfCloudTripleStoreConfiguration extends Configuration {
         setStrings(CONF_QUERY_AUTH, auth);
     }
 
+    /**
+     * @return A list of authorizations used to access data in Rya.
+     */
     public String[] getAuths() {
         return getStrings(CONF_QUERY_AUTH, EMPTY_STR_ARR);
     }
 
+    /**
+     * @param auths - A list of authorizations used to access data in Rya.. (not null)
+     */
     public void setAuths(final String... auths) {
         Preconditions.checkNotNull(auths);
         setStrings(CONF_QUERY_AUTH, auths);

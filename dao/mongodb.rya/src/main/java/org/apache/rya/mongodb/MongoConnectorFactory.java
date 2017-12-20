@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,11 +18,13 @@
  */
 package org.apache.rya.mongodb;
 
-import java.io.IOException;
+import static java.util.Objects.requireNonNull;
+
 import java.util.Arrays;
+import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.configuration.ConfigurationRuntimeException;
-import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.http.annotation.ThreadSafe;
 
@@ -34,125 +36,146 @@ import com.mongodb.ServerAddress;
 
 import edu.umd.cs.findbugs.annotations.DefaultAnnotation;
 import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Mongo convention generally allows for a single instance of a {@link MongoClient}
  * throughout the life cycle of an application.  This MongoConnectorFactory lazy
  * loads a Mongo Client and uses the same one whenever {@link MongoConnectorFactory#getMongoClient(Configuration)}
  * is invoked.
+ *
+ * TODO talk about who uses this thing and when it is appropriate to not use it. also rename it as a singleton holder or something.
+ *
+ * TODO talk about how this is meant to make it so you can reuse a client through the lifecycle of an application.
  */
 @ThreadSafe
 @DefaultAnnotation(NonNull.class)
-public class MongoConnectorFactory {
+public final class MongoConnectorFactory {
+
+    private static final ReentrantLock LOCK = new ReentrantLock();
+
     private static MongoClient mongoClient;
 
-    private final static String MSG_INTRO = "Failed to connect to MongoDB: ";
-
     /**
-     * @param conf The {@link Configuration} defining how to construct the MongoClient.
-     * @return A {@link MongoClient}.  This client is lazy loaded and the same one
-     * is used throughout the lifecycle of the application.
-     * @throws IOException - if MongodForTestsFactory constructor has an io exception.
-     * @throws ConfigurationRuntimeException - Thrown if the configured server, port, user, or others are missing.
-     * @throws MongoException  if can't connect despite conf parameters are given
+     * Connects a {@link MongoClient} using the provided {@link Configuration} if this object isn't
+     * already holding a client. Returns the new or already existing client.
+     *
+     * @param conf - The {@link Configuration} that will be used to connect to a MongoDB Server if
+     *   a new connection needs to be made. (not null)
+     * @return The existing/new {@link MongoClient}.
+     * @throws ConfigurationRuntimeException - Thrown if the configured port is invalid.
+     * @throws MongoException  Couldn't connect to the MongoDB Server.
      */
-    public static synchronized MongoClient getMongoClient(final Configuration conf)
-            throws ConfigurationRuntimeException, MongoException {
-        if (mongoClient == null) {
-            if(conf instanceof MongoDBRdfConfiguration && ((MongoDBRdfConfiguration) conf).getMongoClient() != null) {
-                mongoClient = ((MongoDBRdfConfiguration) conf).getMongoClient();
-            } else {
-                createMongoClientForServer(conf);
+    public static MongoClient getMongoClient(final Configuration conf) throws ConfigurationRuntimeException, MongoException {
+        requireNonNull(conf);
+        LOCK.lock();
+        try {
+            if(mongoClient == null) {
+                mongoClient = createMongoClientForServer(conf);
             }
+            return mongoClient;
+        } finally {
+            LOCK.unlock();
         }
-        return mongoClient;
     }
 
     /**
-     * Silently closes the underlying Mongo client.
+     * @return The held {@link MongoClient} if one has been created.
      */
-    public static synchronized void closeMongoClient() {
-        IOUtils.closeQuietly(mongoClient);
-        mongoClient = null;
+    public static Optional<MongoClient> getMongoClient() {
+        LOCK.lock();
+        try {
+            return Optional.ofNullable(mongoClient);
+        } finally {
+            LOCK.unlock();
+        }
     }
 
     /**
-     * Create a MongoDB client object and assign it to this class's static mongoClient
-     * @param conf configuration containing connection parameters
-     * @throws ConfigurationRuntimeException - Thrown if the configured server, port, user, or others are missing.
-     * @throws MongoException  if can't connect despite conf parameters are given
+     * Update the {@link MongoClient} that is held onto by this object. If one arleady exists, close
+     * it before replacing it.
+     *
+     * @param mongoClient - The new client that will be held onto by this class. (not null)
      */
-    private static void createMongoClientForServer(final Configuration conf)
-            throws ConfigurationRuntimeException, MongoException {
-        // Set some options to speed up the timeouts if db server isn't available
-        MongoClientOptions options2 = makeMongoClientOptions(conf);
-        // Connect to a running Mongo server
-        final String host = requireNonNull(conf.get(MongoDBRdfConfiguration.MONGO_INSTANCE), MSG_INTRO+"host name is required");
-        final int port = requireNonNullInt(conf.get(MongoDBRdfConfiguration.MONGO_INSTANCE_PORT), MSG_INTRO+"Port number is required.");
-        final ServerAddress server = new ServerAddress(host, port);
-        // check for authentication credentials
-        if (conf.get(MongoDBRdfConfiguration.MONGO_USER) != null) {
-            final String username = conf.get(MongoDBRdfConfiguration.MONGO_USER);
-            final String dbName = requireNonNull(conf.get(MongoDBRdfConfiguration.MONGO_DB_NAME),
-                    MSG_INTRO + MongoDBRdfConfiguration.MONGO_DB_NAME + " is null but required configuration if "
-                            + MongoDBRdfConfiguration.MONGO_USER + " is configured.");
-            final char[] pswd = requireNonNull(conf.get(MongoDBRdfConfiguration.MONGO_USER_PASSWORD),
-                    MSG_INTRO + MongoDBRdfConfiguration.MONGO_USER_PASSWORD + " is null but required configuration if "
-                            + MongoDBRdfConfiguration.MONGO_USER + " is configured.").toCharArray();
-            final MongoCredential cred = MongoCredential.createCredential(username, dbName, pswd);
-            mongoClient = new MongoClient(server, Arrays.asList(cred), options2);
+    public static void upsertMongoClient(final MongoClient mongoClient) {
+        requireNonNull(mongoClient);
+        LOCK.lock();
+        try {
+            closeMongoClient();
+            MongoConnectorFactory.mongoClient = mongoClient;
+        } finally {
+            LOCK.unlock();
+        }
+    }
 
+    /**
+     * If this object is holding onto a {@link MongoClient}, then it is closed and let go.
+     */
+    public static void closeMongoClient() {
+        LOCK.lock();
+        try {
+            if(mongoClient != null) {
+                mongoClient.close();
+                mongoClient = null;
+            }
+        } finally {
+            LOCK.unlock();
+        }
+    }
+
+    /**
+     * Make a {@link MongoClient} that is connected to a specific Database if those configuration values are present.
+     *
+     * @param conf - Configuration containing connection parameters. (not null)
+     * @throws ConfigurationRuntimeException - Thrown if the configured port is invalid.
+     * @throws MongoException  Couldn't connect to the MongoDB Server.
+     */
+    private static MongoClient createMongoClientForServer(final Configuration conf) throws ConfigurationRuntimeException, MongoException {
+        requireNonNull(conf);
+
+        final MongoDBRdfConfiguration mongoConf = (conf instanceof MongoDBRdfConfiguration) ?
+                (MongoDBRdfConfiguration) conf : new MongoDBRdfConfiguration(conf);
+
+        // Set some options to speed up the timeouts if db server isn't available.
+        final MongoClientOptions clientOptions = makeMongoClientOptions(conf);
+
+        // Connect to a running MongoDB server.
+        final int port;
+        try {
+            port = Integer.getInteger( mongoConf.getMongoPort() );
+        } catch(final NumberFormatException e) {
+            throw new ConfigurationRuntimeException("Port '" + mongoConf.getMongoPort() + "' must be an integer.");
+        }
+
+        final ServerAddress server = new ServerAddress(mongoConf.getMongoHostname(), port);
+
+        // Connect to a specific MongoDB Database if that information is provided.
+        final String username = mongoConf.getMongoUser();
+        final String database = mongoConf.getRyaInstance();
+        final String password = mongoConf.getMongoPassword();
+        if(username != null && database != null && password != null) {
+            final MongoCredential cred = MongoCredential.createCredential(username, database, password.toCharArray());
+            return new MongoClient(server, Arrays.asList(cred), clientOptions);
         } else {
-            // No user was configured:
-            mongoClient = new MongoClient(server, options2);
+            return new MongoClient(server, clientOptions);
         }
     }
 
     /**
-     * @param conf
-     *            -- Rya configutation
-     * @return Mongodb client options corresponding to conf
+     * @param conf - Rya configutation. (not null)
+     * @return MongoDB client options corresponding to the Rya Configuration.
      */
     private static MongoClientOptions makeMongoClientOptions(final Configuration conf) {
+        requireNonNull(conf);
+
+        final MongoClientOptions.Builder builder = MongoClientOptions.builder();
+
+        // These are much quicker than defaults. Good for impatient humans.
         if (conf.getBoolean("timeoutFast", false)) {
-            MongoClientOptions.Builder optionsBuilder = MongoClientOptions.builder();
-            // These are much quicker than defaults. Good for impatient humans.
-            optionsBuilder.connectTimeout(1000);
-            optionsBuilder.socketTimeout(1000);
-            optionsBuilder.serverSelectionTimeout(1000);
-            return optionsBuilder.build();
+            builder.connectTimeout(1000);
+            builder.socketTimeout(1000);
+            builder.serverSelectionTimeout(1000);
         }
-        else {
-            // use all defaults.
-            return new MongoClientOptions.Builder().build();
-        }
-    }
 
-    /**
-     * Throw exception for un-configured required values.
-     *
-     * @param required  String to check
-     * @param message  throw configuration exception with this description
-     * @return unaltered required string
-     * @throws ConfigurationRuntimeException  if required is null
-     */
-    private static String requireNonNull(final String required, final String message) throws ConfigurationRuntimeException {
-        if (required == null) {
-            throw new ConfigurationRuntimeException(message);
-        }
-        return required;
-    }
-
-    /*
-     * Same as above, check that it is a integer and return the parsed integer.
-     */
-    private static int requireNonNullInt(final String required, final String message) throws ConfigurationRuntimeException {
-        if (required == null) {
-            throw new ConfigurationRuntimeException(message);
-        }
-        try {
-            return Integer.parseInt(required);
-        } catch (final NumberFormatException e) {
-            throw new ConfigurationRuntimeException(message);
-        }
+        return builder.build();
     }
 }

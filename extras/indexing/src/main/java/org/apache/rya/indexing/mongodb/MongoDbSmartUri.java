@@ -153,7 +153,7 @@ public class MongoDbSmartUri implements SmartUriStorage {
         if (mongoClient == null) {
             mongoClient = MongoConnectorFactory.getMongoClient(conf);
         }
-        entityStorage = new MongoEntityStorage(mongoClient, mongoConf.getMongoInstance());
+        entityStorage = new MongoEntityStorage(mongoClient, mongoConf.getMongoHostname());
         isInit = true;
     }
 
