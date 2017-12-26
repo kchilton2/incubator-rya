@@ -97,9 +97,6 @@ public abstract class AbstractMongoIndexer<T extends IndexingMongoDBStorageStrat
         checkState(conf instanceof StatefulMongoDBRdfConfiguration,
                 "The provided Configuration must be a StatefulMongoDBRdfConfiguration, but it was " + conf.getClass().getName());
         this.conf = (StatefulMongoDBRdfConfiguration) conf;
-        if (!isInit){
-            init();
-        }
     }
 
     @Override
