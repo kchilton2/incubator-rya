@@ -97,7 +97,6 @@ public class RyaSailFactory {
 
             // Initialize the indexer and optimizer objects that will be used within the Sail object.
             final List<MongoSecondaryIndex> indexers = mongoConfig.getInstances(AccumuloRdfConfiguration.CONF_ADDITIONAL_INDEXERS, MongoSecondaryIndex.class);
-            // TODO Optimizers the same way. They're getting the wrong configuration somehow.
 
             // Populate the configuration using previously stored Rya Details if this instance uses them.
             try {
