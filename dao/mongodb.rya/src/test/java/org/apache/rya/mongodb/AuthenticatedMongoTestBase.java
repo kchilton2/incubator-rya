@@ -18,6 +18,7 @@
  */
 package org.apache.rya.mongodb;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -32,11 +33,18 @@ import com.mongodb.client.MongoCollection;
  * A base class that may be used when implementing Mongo DB tests that use the
  * JUnit framework.
  */
-public class AuthenticatedMongoTestBase {
-
+public abstract class AuthenticatedMongoTestBase {
+    private static EmbeddedMongoFactory FACTORY;
     private MongoClient mongoClient = null;
     protected StatefulMongoDBRdfConfiguration conf;
 
+    static {
+        try {
+            FACTORY = EmbeddedMongoFactory.newFactory(true);
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
+    }
     @Before
     public void setupTest() throws Exception {
         // Setup the configuration that will be used within the test.
@@ -44,21 +52,22 @@ public class AuthenticatedMongoTestBase {
         conf.setBoolean("sc.useMongo", true);
         conf.setTablePrefix("test_");
         conf.setMongoDBName("testDB");
-        conf.setMongoHostname(EmbeddedMongoSingleton.getMongodConfig().net().getServerAddress().getHostAddress());
-        conf.setMongoPort(Integer.toString(EmbeddedMongoSingleton.getMongodConfig().net().getPort()));
+        conf.setMongoHostname(FACTORY.getMongoServerDetails().net().getServerAddress().getHostAddress());
+        conf.setMongoPort(Integer.toString(FACTORY.getMongoServerDetails().net().getPort()));
 
         // Let tests update the configuration.
         updateConfiguration(conf);
 
+        updateMongoUsers();
+
+        createConfigAndClient(conf);
+    }
+
+    protected void createAndSetStatefulConfig(final MongoDBRdfConfiguration conf, final String username, final char[] password) throws Exception{
         // Create the stateful configuration object.
-        mongoClient = EmbeddedMongoSingleton.getNewMongoClient();
+        mongoClient = FACTORY.newMongoClient(username, password);
         final List<MongoSecondaryIndex> indexers = conf.getInstances("ac.additional.indexers", MongoSecondaryIndex.class);
         this.conf = new StatefulMongoDBRdfConfiguration(conf, mongoClient, indexers);
-
-        // Remove any DBs that were created by previous tests.
-        for(final String dbName : mongoClient.listDatabaseNames()) {
-            mongoClient.dropDatabase(dbName);
-        }
     }
 
     /**
@@ -71,22 +80,25 @@ public class AuthenticatedMongoTestBase {
         // By default, do nothing.
     }
 
-    protected void addAdminUser(final String username, final char[] password) {
+    protected abstract void updateMongoUsers() throws Exception;
 
+    protected abstract void createConfigAndClient(final MongoDBRdfConfiguration conf) throws Exception;
+
+    protected void addAdminUser(final String username, final char[] password) throws Exception {
+        FACTORY.addAdmin(username, password);
     }
 
-    protected void addDBUser(final String username, final char[] password) {
-
+    protected void addDBUser(final String username, final char[] password, final String mongoDBName, final String adminUsername, final char[] adminPassword) throws IOException {
+        FACTORY.addDBUser(username, password, mongoDBName, adminUsername, adminPassword);
     }
 
-    protected void removeAdminuser(final String username) {
-
+    protected void removeUser(final String username) throws Exception {
+        FACTORY.removeUser(username);
     }
 
-    protected void removeDBUser(final String username) {
-
+    protected void removeAllUsers(final String adminUsername, final char[] adminPassword) throws Exception {
+        FACTORY.removeAllUsers(adminUsername, adminPassword);
     }
-
 
     /**
      * @return A {@link MongoClient} that is connected to the embedded instance of Mongo DB.
