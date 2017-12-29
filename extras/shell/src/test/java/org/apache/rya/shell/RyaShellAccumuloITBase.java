@@ -42,7 +42,7 @@ import org.apache.rya.accumulo.MiniAccumuloClusterInstance;
  * and shutdown hooks for a Mini Accumulo Cluster when you start and stop testing.
  * It also creates a new shell to test with between each test.
  */
-public class RyaShellITBase {
+public class RyaShellAccumuloITBase {
 
     /**
      * The bootstrap that was used to initialize the Shell that will be tested.
