@@ -24,6 +24,7 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.bson.Document;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
@@ -36,15 +37,17 @@ import com.mongodb.client.MongoCollection;
 public abstract class AuthenticatedMongoTestBase {
     private static EmbeddedMongoFactory FACTORY;
     private MongoClient mongoClient = null;
+
+    /**
+     * The Stateful config here will contain an admin client to mongo.
+     */
     protected StatefulMongoDBRdfConfiguration conf;
 
-    static {
-        try {
-            FACTORY = EmbeddedMongoFactory.newFactory(true);
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
+    @BeforeClass
+    public static void createFactory() throws Exception {
+        FACTORY = EmbeddedMongoFactory.newFactory(true);
     }
+
     @Before
     public void setupTest() throws Exception {
         // Setup the configuration that will be used within the test.
@@ -60,14 +63,20 @@ public abstract class AuthenticatedMongoTestBase {
 
         updateMongoUsers();
 
-        createConfigAndClient(conf);
-    }
-
-    protected void createAndSetStatefulConfig(final MongoDBRdfConfiguration conf, final String username, final char[] password) throws Exception{
-        // Create the stateful configuration object.
-        mongoClient = FACTORY.newMongoClient(username, password);
+        mongoClient = FACTORY.newMongoClient(EmbeddedMongoFactory.DEFAULT_ADMIN_USER, EmbeddedMongoFactory.DEFAULT_ADMIN_PSWD);
         final List<MongoSecondaryIndex> indexers = conf.getInstances("ac.additional.indexers", MongoSecondaryIndex.class);
         this.conf = new StatefulMongoDBRdfConfiguration(conf, mongoClient, indexers);
+    }
+
+    protected MongoClient createAuthClient(final String username, final char[] password) throws Exception {
+        final MongoClient authClient = FACTORY.newMongoClient(username, password);
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                authClient.close();
+            }
+        });
+        return authClient;
     }
 
     /**
@@ -81,8 +90,6 @@ public abstract class AuthenticatedMongoTestBase {
     }
 
     protected abstract void updateMongoUsers() throws Exception;
-
-    protected abstract void createConfigAndClient(final MongoDBRdfConfiguration conf) throws Exception;
 
     protected void addAdminUser(final String username, final char[] password) throws Exception {
         FACTORY.addAdmin(username, password);
@@ -103,21 +110,21 @@ public abstract class AuthenticatedMongoTestBase {
     /**
      * @return A {@link MongoClient} that is connected to the embedded instance of Mongo DB.
      */
-    public MongoClient getMongoClient() {
+    public MongoClient getAdminMongoClient() {
         return mongoClient;
     }
 
     /**
      * @return The Rya triples {@link MongoCollection}.
      */
-    public MongoCollection<Document> getRyaCollection() {
+    public MongoCollection<Document> getRyaCollectionAsAdmin() {
         return mongoClient.getDatabase(conf.getMongoDBName()).getCollection(conf.getTriplesCollectionName());
     }
 
     /**
      * @return The Rya triples {@link DBCollection}.
      */
-    public DBCollection getRyaDbCollection() {
+    public DBCollection getRyaDbCollectionAsAdmin() {
         return mongoClient.getDB(conf.getMongoDBName()).getCollection(conf.getTriplesCollectionName());
     }
 }

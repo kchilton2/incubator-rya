@@ -33,6 +33,7 @@ import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -44,6 +45,7 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 
+import de.flapdoodle.embed.mongo.AbstractMongoProcess;
 import de.flapdoodle.embed.mongo.Command;
 import de.flapdoodle.embed.mongo.MongoShellStarter;
 import de.flapdoodle.embed.mongo.MongodExecutable;
@@ -58,48 +60,79 @@ import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.config.RuntimeConfigBuilder;
 import de.flapdoodle.embed.mongo.distribution.IFeatureAwareVersion;
 import de.flapdoodle.embed.mongo.distribution.Version;
+import de.flapdoodle.embed.mongo.runtime.Mongod;
 import de.flapdoodle.embed.process.config.IRuntimeConfig;
 import de.flapdoodle.embed.process.config.io.ProcessOutput;
+import de.flapdoodle.embed.process.distribution.Distribution;
+import de.flapdoodle.embed.process.extract.IExtractedFileSet;
 import de.flapdoodle.embed.process.io.IStreamProcessor;
 import de.flapdoodle.embed.process.io.LogWatchStreamProcessor;
 import de.flapdoodle.embed.process.io.NamedOutputStreamProcessor;
+import de.flapdoodle.embed.process.io.file.Files;
+import de.flapdoodle.embed.process.runtime.Executable;
 
 public class EmbeddedMongoFactory {
     private static Logger logger = LoggerFactory.getLogger(EmbeddedMongoFactory.class.getName());
 
-    private final IMongodConfig mongoConfig;
+    public static final String DEFAULT_ADMIN_USER = "test_admin";
+    public static final char[] DEFAULT_ADMIN_PSWD = "pswd".toCharArray();
 
-    public static EmbeddedMongoFactory newFactory(final boolean authEnabled) throws IOException {
+    private IMongodConfig mongoConfig;
+
+    public static EmbeddedMongoFactory newFactory(final boolean authEnabled) throws Exception {
         return EmbeddedMongoFactory.with(Version.Main.PRODUCTION, authEnabled);
     }
 
-    public static EmbeddedMongoFactory with(final IFeatureAwareVersion version, final boolean authEnabled) throws IOException {
+    public static EmbeddedMongoFactory with(final IFeatureAwareVersion version, final boolean authEnabled) throws Exception {
         return new EmbeddedMongoFactory(version, authEnabled);
     }
 
-    private final MongodExecutable mongodExecutable;
-    private final MongodProcess mongodProcess;
+    private Executable<IMongodConfig, MongodProcess> mongodExecutable;
+    private AbstractMongoProcess<IMongodConfig, MongodExecutable, MongodProcess> mongodProcess;
 
     /**
      * Create the testing utility using the specified version of MongoDB.
      *
      * @param version - version of MongoDB.
      * @param authEnabled - Whether or not to use authentication
+     * @throws Exception
      */
-    private EmbeddedMongoFactory(final IFeatureAwareVersion version, final boolean authEnabled) throws IOException {
-        final IMongoCmdOptions cmdBuilder = new MongoCmdOptionsBuilder()
-                //.enableAuth(authEnabled)
-                .build();
+    private EmbeddedMongoFactory(final IFeatureAwareVersion version, final boolean authEnabled) throws Exception {
+        final Net net = new Net(findRandomOpenPortOnAllLocalInterfaces(), false);
         mongoConfig = new MongodConfigBuilder()
                 .version(version)
-                .cmdOptions(cmdBuilder)
-                .net(new Net(findRandomOpenPortOnAllLocalInterfaces(), false))
+                .net(net)
                 .build();
 
-
-        final MongodStarter runtime = MongodStarter.getInstance(new RuntimeConfigBuilder().defaultsWithLogger(Command.MongoD, logger).build());
+        final IRuntimeConfig runtimeConfig = new RuntimeConfigBuilder().defaultsWithLogger(Command.MongoD, logger).build();
+        final MongodStarter runtime = MongodStarter.getInstance(runtimeConfig);
         mongodExecutable = runtime.prepare(mongoConfig);
         mongodProcess = mongodExecutable.start();
+
+        if(authEnabled) {
+            //add admin user
+            System.out.print("Adding default admin user.....");
+            addAdmin(DEFAULT_ADMIN_USER, DEFAULT_ADMIN_PSWD);
+            System.out.println("Done.");
+
+            //bring un-authed mongo down
+            //mongodProcess.stop();
+
+            //update configs to enable auths
+            final IMongoCmdOptions cmdBuilder = new MongoCmdOptionsBuilder()
+                    .enableAuth(authEnabled)
+                    .build();
+            mongoConfig = new MongodConfigBuilder()
+                    .version(version)
+                    .cmdOptions(cmdBuilder)
+                    .net(new Net(findRandomOpenPortOnAllLocalInterfaces(), false))
+                    .build();
+
+            final IExtractedFileSet dbFile = mongodExecutable.getFile();
+            mongodExecutable = new EmbeddedMongodExecutable(Distribution.detectFor(version), mongoConfig, runtimeConfig, dbFile);
+            mongodProcess = mongodExecutable.start();
+        }
+
     }
 
     private int findRandomOpenPortOnAllLocalInterfaces() throws IOException {
@@ -111,11 +144,12 @@ public class EmbeddedMongoFactory {
     public void addAdmin(final String username, final char[] password) throws Exception {
         final String scriptText = join(
                 format("db.createUser(" +
-                        "{\"user\":\"%s\"," +
-                        "\"pwd\":\"%s\"," +
-                        "\"roles\":[\"root\"]});\n",
+                        "{\"user\":\"%s\",\"pwd\":\"%s\"," +
+                        "\"roles\":[" +
+                        "\"root\"" +
+                        "]});\n",
                         username, password));
-        runScriptAndWait(scriptText, "Successfully added admin", new String[]{"couldn't add user", "failed to load", "login failed"}, null, null, null);
+        runScriptAndWait(scriptText, "Successfully added user", new String[]{"couldn't add user", "failed to load", "login failed"}, "admin", null, null);
     }
 
     public void addDBUser(final String username, final char[] password, final String mongoDBName, final String adminUsername, final char[] adminPassword) throws IOException {
@@ -207,12 +241,12 @@ public class EmbeddedMongoFactory {
             builder.password(new String(password));
         }
         starter.prepare(builder
-                .scriptName(scriptFile.getAbsolutePath())
+                .scriptName(scriptFile.getPath())
                 .version(mongoConfig.version())
                 .net(mongoConfig.net())
                 .build()).start();
         if (mongoOutput instanceof LogWatchStreamProcessor) {
-            ((LogWatchStreamProcessor) mongoOutput).waitForResult(30000);
+            ((LogWatchStreamProcessor) mongoOutput).waitForResult(10000);
         }
     }
 
@@ -223,5 +257,71 @@ public class EmbeddedMongoFactory {
         bw.write(scriptText);
         bw.close();
         return scriptFile;
+    }
+
+    public class EmbeddedMongodExecutable extends Executable<IMongodConfig, MongodProcess> {
+
+        public EmbeddedMongodExecutable(final Distribution distribution, final IMongodConfig mongodConfig, final IRuntimeConfig runtimeConfig,
+                final IExtractedFileSet files) {
+            super(distribution, mongodConfig, runtimeConfig, files);
+        }
+
+        @Override
+        protected MongodProcess start(final Distribution distribution, final IMongodConfig config, final IRuntimeConfig runtime)
+                throws IOException {
+            return new EmbeddedMongodProcess(distribution, config, runtime, this);
+        }
+
+    }
+
+    private static class EmbeddedMongodProcess extends MongodProcess {
+
+        private static final Logger logger = LoggerFactory.getLogger(EmbeddedMongodProcess.class);
+
+        private File dbDir;
+        boolean dbDirIsTemp;
+
+        private final MongodExecutable mongodExecutable;
+
+        public EmbeddedMongodProcess(final Distribution distribution, final IMongodConfig config, final IRuntimeConfig runtimeConfig,
+                final EmbeddedMongodExecutable embeddedMongodExecutable) throws IOException {
+            super(distribution, config, runtimeConfig, embeddedMongodExecutable);
+            mongodExecutable = embeddedMongodExecutable;
+        }
+
+        @Override
+        protected void onBeforeProcess(final IRuntimeConfig runtimeConfig) throws IOException {
+            super.onBeforeProcess(runtimeConfig);
+
+            dbDir = mongodExecutable.getFile().executable();
+        }
+
+        @Override
+        protected void onBeforeProcessStart(final ProcessBuilder processBuilder, final IMongodConfig config, final IRuntimeConfig runtimeConfig) {
+            config.processListener().onBeforeProcessStart(dbDir,dbDirIsTemp);
+            super.onBeforeProcessStart(processBuilder, config, runtimeConfig);
+        }
+
+        @Override
+        protected void onAfterProcessStop(final IMongodConfig config, final IRuntimeConfig runtimeConfig) {
+            super.onAfterProcessStop(config, runtimeConfig);
+            config.processListener().onAfterProcessStop(dbDir,dbDirIsTemp);
+        }
+
+
+        @Override
+        protected List<String> getCommandLine(final Distribution distribution, final IMongodConfig config, final IExtractedFileSet files) throws IOException {
+            return Mongod.enhanceCommandLinePlattformSpecific(distribution, Mongod.getCommandLine(getConfig(), files, dbDir));
+        }
+
+        @Override
+        protected void deleteTempFiles() {
+            super.deleteTempFiles();
+
+            if ((dbDir != null) && (dbDirIsTemp) && (!Files.forceDelete(dbDir))) {
+                logger.warn("Could not delete temp db dir: {}", dbDir);
+            }
+
+        }
     }
 }

@@ -288,13 +288,13 @@ public class MongoRyaDirectExample {
         Validate.isTrue(tupleHandler.getCount() == 2);
     }
 
-    private static Configuration getConf() throws IOException {
+    private static Configuration getConf() throws Exception {
 
         MongoDBIndexingConfigBuilder builder = MongoIndexingConfiguration.builder()
             .setUseMockMongo(USE_MOCK).setUseInference(USE_INFER).setAuths("U");
 
         if (USE_MOCK) {
-            final EmbeddedMongoFactory factory = EmbeddedMongoFactory.newFactory();
+            final EmbeddedMongoFactory factory = EmbeddedMongoFactory.newFactory(false);
             final IMongoConfig connectionConfig = factory.getMongoServerDetails();
             Net net = connectionConfig.net();
             builder.setMongoHost(net.getServerAddress().getHostAddress())
