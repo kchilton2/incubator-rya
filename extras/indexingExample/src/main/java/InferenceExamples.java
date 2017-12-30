@@ -139,7 +139,7 @@ public class InferenceExamples {
 	        }
 	    }
 
-	    private static Configuration getConf() throws IOException {
+	    private static Configuration getConf() throws Exception {
 
 	       // MongoDBIndexingConfigBuilder builder = MongoIndexingConfiguration.builder()
 	       //     .setUseMockMongo(USE_MOCK).setUseInference(USE_INFER).setAuths("U");
@@ -147,7 +147,7 @@ public class InferenceExamples {
 		            .setUseMockMongo(USE_EMBEDDED_MONGO).setUseInference(true).setAuths("U");
 
 	        if (USE_EMBEDDED_MONGO) {
-	            final MongoClient c = EmbeddedMongoFactory.newFactory().newMongoClient();
+	            final MongoClient c = EmbeddedMongoFactory.newFactory(false).newMongoClient();
 	            final ServerAddress address = c.getAddress();
 	            final String url = address.getHost();
 	            final String port = Integer.toString(address.getPort());

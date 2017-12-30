@@ -168,13 +168,13 @@ public class RyaMongoGeoDirectExample {
     }
 
     private static EmbeddedMongoFactory mock = null;
-    private static Configuration getConf() throws IOException {
+    private static Configuration getConf() throws Exception {
 
     	MongoDBIndexingConfigBuilder builder = MongoIndexingConfiguration.builder()
     		.setUseMockMongo(USE_MOCK).setUseInference(USE_INFER).setAuths("U");
 
         if (USE_MOCK) {
-            mock = EmbeddedMongoFactory.newFactory();
+            mock = EmbeddedMongoFactory.newFactory(false);
             MongoClient c = mock.newMongoClient();
             ServerAddress address = c.getAddress();
             String url = address.getHost();
