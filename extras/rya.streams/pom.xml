@@ -36,6 +36,7 @@
     <modules>
         <module>kafka</module>
         <module>kafka-test</module>
+        <module>kafka-connect-mongo-sink</module>
         <module>api</module>
         <module>client</module>
         <module>integration</module>
