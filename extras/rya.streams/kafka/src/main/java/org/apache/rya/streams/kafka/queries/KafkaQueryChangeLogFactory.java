@@ -66,6 +66,7 @@ public class KafkaQueryChangeLogFactory {
         consumerProperties.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         consumerProperties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         consumerProperties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, QueryChangeDeserializer.class.getName());
+        consumerProperties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         final Producer<?, QueryChange> producer = new KafkaProducer<>(producerProperties);
         final Consumer<?, QueryChange> consumer = new KafkaConsumer<>(consumerProperties);

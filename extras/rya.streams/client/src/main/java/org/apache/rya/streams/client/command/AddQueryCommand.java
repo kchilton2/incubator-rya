@@ -121,6 +121,7 @@ public class AddQueryCommand implements RyaStreamsCommand {
             try {
                 final StreamsQuery query = addQuery.addQuery(params.query, Boolean.parseBoolean(params.isActive));
                 System.out.println("Added query: " + query.getSparql());
+                System.out.println("Query ID: " + query.getQueryId());
             } catch (final RyaStreamsException e) {
                 System.err.println("Unable to parse query: " + params.query);
                 e.printStackTrace();

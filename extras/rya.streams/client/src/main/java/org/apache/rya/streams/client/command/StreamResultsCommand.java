@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,10 +20,19 @@ package org.apache.rya.streams.client.command;
 
 import static java.util.Objects.requireNonNull;
 
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.rya.api.model.VisibilityBindingSet;
+import org.apache.rya.api.model.VisibilityStatement;
+import org.apache.rya.api.utils.QueryInvestigator;
 import org.apache.rya.streams.api.entity.QueryResultStream;
 import org.apache.rya.streams.api.entity.StreamsQuery;
 import org.apache.rya.streams.api.interactor.GetQueryResultStream;
@@ -31,13 +40,13 @@ import org.apache.rya.streams.api.queries.InMemoryQueryRepository;
 import org.apache.rya.streams.api.queries.QueryChangeLog;
 import org.apache.rya.streams.api.queries.QueryRepository;
 import org.apache.rya.streams.client.RyaStreamsCommand;
+import org.apache.rya.streams.client.util.QueryResultsOutputUtil;
 import org.apache.rya.streams.kafka.KafkaTopics;
 import org.apache.rya.streams.kafka.interactor.KafkaGetQueryResultStream;
 import org.apache.rya.streams.kafka.queries.KafkaQueryChangeLogFactory;
 import org.apache.rya.streams.kafka.serialization.VisibilityBindingSetDeserializer;
 import org.apache.rya.streams.kafka.serialization.VisibilityStatementDeserializer;
 import org.openrdf.query.MalformedQueryException;
-import org.openrdf.query.algebra.Reduced;
 import org.openrdf.query.algebra.TupleExpr;
 import org.openrdf.query.parser.sparql.SPARQLParser;
 
@@ -63,14 +72,20 @@ public class StreamResultsCommand implements RyaStreamsCommand {
         @Parameter(names = {"--queryId", "-q"}, required = true, description = "The query whose results will be streamed to the console.")
         private String queryId;
 
+        @Parameter(names = {"--file", "-f"}, required = false, description = "If provided, the output file the results will stream into.")
+        private String outputPath;
+
         @Override
         public String toString() {
             final StringBuilder parameters = new StringBuilder();
             parameters.append(super.toString());
 
             if (!Strings.isNullOrEmpty(queryId)) {
-                parameters.append("\tQuery ID: " + queryId);
-                parameters.append("\n");
+                parameters.append("\tQuery ID: " + queryId + "\n");
+            }
+
+            if(!Strings.isNullOrEmpty(outputPath)) {
+                parameters.append("\tOutput Path: " + outputPath + "\n");
             }
 
             return parameters.toString();
@@ -105,6 +120,16 @@ public class StreamResultsCommand implements RyaStreamsCommand {
             valid = false;
         }
         return valid;
+    }
+
+    public static void main(final String[] args) throws Exception {
+        new StreamResultsCommand().execute(new String[] {
+                "-i", "node6",
+                "-r", "query-manager-it",
+                "-p", "9092",
+                "-q", "8dd689ee-9d16-4aa7-91c0-667cdb3ed81a",
+                "-f", "/home/kevin.chilton/Desktop/results.nt"
+        });
     }
 
     @Override
@@ -147,18 +172,34 @@ public class StreamResultsCommand implements RyaStreamsCommand {
 
         // This command executes until the application is killed, so create a kill boolean.
         final AtomicBoolean finished = new AtomicBoolean(false);
+        final CountDownLatch writingFinished = new CountDownLatch(1);
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
+                System.out.println("Signaling the writer to shutdown.");
                 finished.set(true);
+
+                try {
+                    System.out.println("Waiting for the writer to finish...");
+                    if(writingFinished.await(10, TimeUnit.SECONDS)) {
+                        System.out.println("Finished waiting for the writer.");
+                    } else {
+                        System.err.println("The writer didn't shut down after 10 seconds. Exiting.");
+                    }
+                } catch (final InterruptedException e) {
+                    System.err.println("Interrupted while waiting for the writers to finish.");
+                    e.printStackTrace();
+                }
             }
         });
 
         // Build the interactor based on the type of result the query produces.
+        boolean isStatementResults = false;
+
         final GetQueryResultStream<?> getQueryResultStream;
         try {
-            final TupleExpr tupleExpr = new SPARQLParser().parseQuery(sparql, null).getTupleExpr();
-            if(tupleExpr instanceof Reduced) {
+            isStatementResults = QueryInvestigator.isConstruct(sparql) | QueryInvestigator.isInsertWhere(sparql);
+            if(isStatementResults) {
                 getQueryResultStream = new KafkaGetQueryResultStream<>(params.kafkaIP, params.kafkaPort, VisibilityStatementDeserializer.class);
             } else {
                 getQueryResultStream = new KafkaGetQueryResultStream<>(params.kafkaIP, params.kafkaPort, VisibilityBindingSetDeserializer.class);
@@ -167,17 +208,42 @@ public class StreamResultsCommand implements RyaStreamsCommand {
             throw new ExecutionException("Could not parse the SPARQL for the query: " + sparql, e);
         }
 
-        // Iterate through the results and print them to the console until the program or the stream ends.
-        try (final QueryResultStream<?> stream = getQueryResultStream.fromStart(queryId)) {
-            while(!finished.get()) {
-                for(final Object result : stream.poll(1000)) {
-                    System.out.println(result);
+        // Iterate through the results and print them to the configured output mechanism.
+        try (final QueryResultStream<?> resultsStream = getQueryResultStream.fromStart(queryId)) {
+            final TupleExpr tupleExpr = new SPARQLParser().parseQuery(sparql, null).getTupleExpr();
+            if(params.outputPath != null) {
+                final Path file = Paths.get(params.outputPath);
+                try(OutputStream out = Files.newOutputStream(file)) {
+                    if(isStatementResults) {
+                        final QueryResultStream<VisibilityStatement> stmtStream = (QueryResultStream<VisibilityStatement>) resultsStream;
+                        QueryResultsOutputUtil.toNtriplesFile(out, stmtStream, finished);
+                    } else {
+                        final QueryResultStream<VisibilityBindingSet> bsStream = (QueryResultStream<VisibilityBindingSet>) resultsStream;
+                        QueryResultsOutputUtil.toBindingSetJSONFile(out, tupleExpr, bsStream, finished);
+                    }
                 }
+            } else {
+                streamToSystemOut(resultsStream, finished);
             }
+
+            // Let the shutdown thread know that the writing is finished.
+            writingFinished.countDown();
+
         } catch (final Exception e) {
             System.err.println("Error while reading the results from the stream.");
             e.printStackTrace();
             System.exit(1);
+        }
+    }
+
+    private void streamToSystemOut(final QueryResultStream<?> stream, final AtomicBoolean shutdownSignal) throws Exception {
+        requireNonNull(stream);
+        requireNonNull(shutdownSignal);
+
+        while(!shutdownSignal.get()) {
+            for(final Object result : stream.poll(1000)) {
+                System.out.println(result);
+            }
         }
     }
 }
