@@ -1,5 +1,5 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
+l * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file
@@ -58,7 +58,6 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.apache.rya.accumulo.AccumuloRdfConfiguration;
-import org.apache.rya.accumulo.mr.AccumuloHDFSFileInputFormat;
 import org.apache.rya.accumulo.mr.MRUtils;
 import org.apache.rya.accumulo.mr.merge.mappers.MergeToolMapper;
 import org.apache.rya.accumulo.mr.merge.util.AccumuloRyaUtils;
@@ -73,7 +72,7 @@ import org.apache.rya.indexing.accumulo.ConfigUtils;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
+ 
 /**
  * Handles merging a child accumulo instance's data back into its parent's
  * instance.
@@ -416,11 +415,7 @@ public class MergeTool extends AbstractDualInstanceAccumuloMRTool {
     @Override
     protected void setupAccumuloInput(final Job job) throws AccumuloSecurityException {
         // set up accumulo input
-        if (!hdfsInput) {
-            job.setInputFormatClass(AccumuloInputFormat.class);
-        } else {
-            job.setInputFormatClass(AccumuloHDFSFileInputFormat.class);
-        }
+        job.setInputFormatClass(AccumuloInputFormat.class);
         AbstractInputFormat.setConnectorInfo(job, userName, new PasswordToken(pwd));
         InputFormatBase.setInputTableName(job, RdfCloudTripleStoreUtils.layoutPrefixToTable(rdfTableLayout, tablePrefix));
         AbstractInputFormat.setScanAuthorizations(job, authorizations);

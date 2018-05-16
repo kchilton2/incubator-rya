@@ -72,7 +72,6 @@ public abstract class AbstractAccumuloMRTool implements Tool {
     protected String pwd;
     protected Authorizations authorizations;
     protected boolean mock = false;
-    protected boolean hdfsInput = false;
     protected String ttl;
     protected String tablePrefix;
     protected TABLE_LAYOUT rdfTableLayout;
@@ -114,7 +113,6 @@ public abstract class AbstractAccumuloMRTool implements Tool {
         ttl = MRUtils.getACTtl(conf);
         tablePrefix = MRUtils.getTablePrefix(conf);
         rdfTableLayout = MRUtils.getTableLayout(conf, TABLE_LAYOUT.OSP);
-        hdfsInput = conf.getBoolean(MRUtils.AC_HDFS_INPUT_PROP, false);
         // Set authorizations if specified
         String authString = conf.get(MRUtils.AC_AUTH_PROP);
         if (authString != null && !authString.isEmpty()) {
@@ -166,11 +164,7 @@ public abstract class AbstractAccumuloMRTool implements Tool {
      */
     protected void setupAccumuloInput(Job job) throws AccumuloSecurityException {
         // set up accumulo input
-        if (!hdfsInput) {
-            job.setInputFormatClass(AccumuloInputFormat.class);
-        } else {
-            job.setInputFormatClass(AccumuloHDFSFileInputFormat.class);
-        }
+        job.setInputFormatClass(AccumuloInputFormat.class);
         AccumuloInputFormat.setConnectorInfo(job, userName, new PasswordToken(pwd));
         String tableName = RdfCloudTripleStoreUtils.layoutPrefixToTable(rdfTableLayout, tablePrefix);
         AccumuloInputFormat.setInputTableName(job, tableName);

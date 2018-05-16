@@ -20,8 +20,11 @@ package org.apache.rya.accumulo.mr;
  */
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map.Entry;
 
+import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.mapreduce.AbstractInputFormat;
 import org.apache.accumulo.core.client.mapreduce.RangeInputSplit;
@@ -139,6 +142,11 @@ public class RyaInputFormat extends AbstractInputFormat<Text, RyaStatementWritab
                 throw new IOException(e);
             }
             return true;
+        }
+
+        @Override
+        protected List<IteratorSetting> contextIterators(TaskAttemptContext context, String tableName) {
+            return Collections.emptyList();
         }
     }
 }

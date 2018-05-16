@@ -83,7 +83,6 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.apache.rya.accumulo.AccumuloRdfConfiguration;
-import org.apache.rya.accumulo.mr.AccumuloHDFSFileInputFormat;
 import org.apache.rya.accumulo.mr.MRUtils;
 import org.apache.rya.accumulo.mr.merge.common.InstanceType;
 import org.apache.rya.accumulo.mr.merge.mappers.AccumuloCopyToolMapper;
@@ -723,11 +722,7 @@ public class CopyTool extends AbstractDualInstanceAccumuloMRTool {
             }
         } else {
             // set up accumulo input
-            if (!hdfsInput) {
-                job.setInputFormatClass(AccumuloInputFormat.class);
-            } else {
-                job.setInputFormatClass(AccumuloHDFSFileInputFormat.class);
-            }
+            job.setInputFormatClass(AccumuloInputFormat.class);
             AbstractInputFormat.setConnectorInfo(job, userName, new PasswordToken(pwd));
             InputFormatBase.setInputTableName(job, RdfCloudTripleStoreUtils.layoutPrefixToTable(rdfTableLayout, tablePrefix));
             AbstractInputFormat.setScanAuthorizations(job, authorizations);
