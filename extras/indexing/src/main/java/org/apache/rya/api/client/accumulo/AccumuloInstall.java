@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,6 +25,7 @@ import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.rya.accumulo.AccumuloRdfConfiguration;
 import org.apache.rya.accumulo.instance.AccumuloRyaInstanceDetailsRepository;
+import org.apache.rya.accumulo.statistics.AccumuloStatementCountsRepository;
 import org.apache.rya.api.client.Install;
 import org.apache.rya.api.client.InstanceExists;
 import org.apache.rya.api.client.RyaClientException;
@@ -40,7 +41,10 @@ import org.apache.rya.api.instance.RyaDetailsRepository;
 import org.apache.rya.api.instance.RyaDetailsRepository.AlreadyInitializedException;
 import org.apache.rya.api.instance.RyaDetailsRepository.RyaDetailsRepositoryException;
 import org.apache.rya.api.persist.RyaDAOException;
+import org.apache.rya.api.statistics.StatementCountsRepository;
+import org.apache.rya.api.statistics.StatementCountsRepository.StatementCountsException;
 import org.apache.rya.indexing.accumulo.ConfigUtils;
+import org.apache.rya.indexing.accumulo.statistics.AccumuloStatementCountIndexer;
 import org.apache.rya.indexing.external.PrecomputedJoinIndexerConfig.PrecomputedJoinStorageType;
 import org.apache.rya.indexing.external.PrecomputedJoinIndexerConfig.PrecomputedJoinUpdaterType;
 import org.apache.rya.rdftriplestore.inference.InferenceEngineException;
@@ -56,7 +60,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 /**
  * An Accumulo implementation of the {@link Install} command.
  */
-
 @DefaultAnnotation(NonNull.class)
 public class AccumuloInstall extends AccumuloCommand implements Install {
 
@@ -74,26 +77,37 @@ public class AccumuloInstall extends AccumuloCommand implements Install {
     }
 
     @Override
-    public void install(final String instanceName, final InstallConfiguration installConfig) throws DuplicateInstanceNameException, RyaClientException {
-        requireNonNull(instanceName);
+    public void install(final String ryaInstanceName, final InstallConfiguration installConfig) throws DuplicateInstanceNameException, RyaClientException {
+        requireNonNull(ryaInstanceName);
         requireNonNull(installConfig);
 
         // Check to see if a Rya instance has already been installed with this name.
-        if(instanceExists.exists(instanceName)) {
+        if(instanceExists.exists(ryaInstanceName)) {
             throw new DuplicateInstanceNameException("An instance of Rya has already been installed to this Rya storage " +
-                    "with the name '" + instanceName + "'. Try again with a different name.");
+                    "with the name '" + ryaInstanceName + "'. Try again with a different name.");
         }
 
         // Initialize the Rya Details table.
         RyaDetails details;
         try {
-            details = initializeRyaDetails(instanceName, installConfig, getConnector().whoami());
+            details = initializeRyaDetails(ryaInstanceName, installConfig, getConnector().whoami());
         } catch (final AlreadyInitializedException e) {
             // This can only happen if somebody else installs an instance of Rya with the name between the check and now.
             throw new DuplicateInstanceNameException("An instance of Rya has already been installed to this Rya storage " +
-                    "with the name '" + instanceName + "'. Try again with a different name.");
+                    "with the name '" + ryaInstanceName + "'. Try again with a different name.");
         } catch (final RyaDetailsRepositoryException e) {
             throw new RyaClientException("The RyaDetails couldn't be initialized. Details: " + e.getMessage(), e);
+        }
+
+        // If enabled, initialize the Statement Count repository.
+        if(installConfig.isMaintainStatementCounts()) {
+            try {
+                final StatementCountsRepository countRepo =
+                        AccumuloStatementCountsRepository.makeReadOnly(getConnector(), AccumuloStatementCountIndexer.makeTableName(ryaInstanceName));
+                countRepo.install();
+            } catch (final StatementCountsException e) {
+                throw new RyaClientException("The Statement Counts Repository could not be initialized. Details: " + e.getMessage(), e);
+            }
         }
 
         // Initialize the rest of the tables used by the Rya instance.
@@ -165,6 +179,7 @@ public class AccumuloInstall extends AccumuloCommand implements Install {
                         new ProspectorDetails(Optional.absent()) )
                 .setJoinSelectivityDetails(
                         new JoinSelectivityDetails(Optional.absent()) )
+                .setMaintainStatementCounts( installConfig.isMaintainStatementCounts() )
                 .build();
 
         // Initialize the table.
@@ -214,10 +229,10 @@ public class AccumuloInstall extends AccumuloCommand implements Install {
         //     we need to include them here. It would be nice if the secondary
         //     indexers used the connector that is provided to them instead of
         //     building a new one.
-        conf.set(ConfigUtils.CLOUDBASE_USER, connectionDetails.getUsername());
-        conf.set(ConfigUtils.CLOUDBASE_PASSWORD, new String(connectionDetails.getUserPass()));
-        conf.set(ConfigUtils.CLOUDBASE_INSTANCE, connectionDetails.getInstanceName());
-        conf.set(ConfigUtils.CLOUDBASE_ZOOKEEPERS, connectionDetails.getZookeepers());
+        conf.setAccumuloUser(connectionDetails.getUsername());
+        conf.setAccumuloPassword(new String(connectionDetails.getUserPass()));
+        conf.setAccumuloInstance(connectionDetails.getInstanceName());
+        conf.setAccumuloZookeepers(connectionDetails.getZookeepers());
 
         // This initializes the living indexers that will be used by the application and
         // caches them within the configuration object so that they may be used later.

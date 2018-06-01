@@ -135,6 +135,10 @@ public interface InstallPrompt {
             final boolean enableTableHashPrefix = promptBoolean(prompt, Optional.of(false));
             builder.setEnableTableHashPrefix( enableTableHashPrefix );
 
+            prompt = makeFieldPrompt("Maintain Statement counts for each Context", false);
+            final boolean enableStatementCountMaintenance = promptBoolean(prompt, Optional.of(false));
+            builder.setMaintainStatementCounts(enableStatementCountMaintenance);
+
             prompt = makeFieldPrompt("Use Entity Centric Indexing", true);
             final boolean enableEntityCentricIndexing = promptBoolean(prompt, Optional.of(true));
             builder.setEnableEntityCentricIndex( enableEntityCentricIndexing );
@@ -186,6 +190,7 @@ public interface InstallPrompt {
             reader.println("A Rya instance will be installed using the following values:");
             reader.println("   Instance Name: " + instanceName);
             reader.println("   Use Shard Balancing: " + installConfig.isTableHashPrefixEnabled());
+            reader.println("   Maintain Statement counts for each Context: " + installConfig.isMaintainStatementCounts());
             reader.println("   Use Entity Centric Indexing: " + installConfig.isEntityCentrixIndexEnabled());
             reader.println("   Use Free Text Indexing: " + installConfig.isFreeTextIndexEnabled());
             // RYA-215            reader.println("   Use Geospatial Indexing: " + installConfig.isGeoIndexEnabled());

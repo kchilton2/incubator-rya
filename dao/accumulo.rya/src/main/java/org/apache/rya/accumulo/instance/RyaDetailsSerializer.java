@@ -1,6 +1,4 @@
-package org.apache.rya.accumulo.instance;
-
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +16,7 @@ package org.apache.rya.accumulo.instance;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.rya.accumulo.instance;
 
 import static java.util.Objects.requireNonNull;
 
@@ -67,22 +66,23 @@ public class RyaDetailsSerializer {
     public RyaDetails deserialize(final byte[] bytes) throws SerializationException {
         requireNonNull(bytes);
 
-        try (final ByteArrayInputStream stream = new ByteArrayInputStream(bytes); //
-                        final ValidatingObjectInputStream vois = new ValidatingObjectInputStream(stream)
-        //// this is how you find classes that you missed in the accept list
-        // { @Override protected void invalidClassNameFound(String className) throws java.io.InvalidClassException {
-        // System.out.println("vois.accept(" + className + ".class, ");};};
-        ) {
+        try (final ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
+                final ValidatingObjectInputStream vois = new ValidatingObjectInputStream(stream)) {
+            //// this is how you find classes that you missed in the accept list
+            // { @Override protected void invalidClassNameFound(String className) throws java.io.InvalidClassException {
+            // System.out.println("vois.accept(" + className + ".class, ");};};
+
             vois.accept(RyaDetails.class,
-                            com.google.common.base.Optional.class, //
-                            java.util.Date.class, //
-                            java.lang.Enum.class);
-            vois.accept("com.google.common.base.Present", //
-                        "com.google.common.base.Absent", //
-                        "com.google.common.collect.ImmutableMap$SerializedForm", //
-                        "com.google.common.collect.ImmutableBiMap$SerializedForm", //
-                        "com.google.common.collect.ImmutableList$SerializedForm", //
-                        "[Ljava.lang.Object;");
+                    com.google.common.base.Optional.class,
+                    java.util.Date.class,
+                    java.lang.Enum.class,
+                    java.lang.Boolean.class);
+            vois.accept("com.google.common.base.Present",
+                    "com.google.common.base.Absent",
+                    "com.google.common.collect.ImmutableMap$SerializedForm",
+                    "com.google.common.collect.ImmutableBiMap$SerializedForm",
+                    "com.google.common.collect.ImmutableList$SerializedForm",
+                    "[Ljava.lang.Object;");
             vois.accept(Pattern.compile("org\\.apache\\.rya\\.api\\.instance\\.RyaDetails.*"));
 
             final Object o = vois.readObject();

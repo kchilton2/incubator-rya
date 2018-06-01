@@ -1,6 +1,4 @@
-package org.apache.rya.api.instance;
-
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,6 +16,7 @@ package org.apache.rya.api.instance;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.rya.api.instance;
 
 /**
  * The possible configuration fields used in a Rya application.
@@ -36,4 +35,5 @@ class ConfigurationFields {
     static final String FLUO_APP_NAME = "rya.indexing.pcj.fluo.fluoAppName";
     static final String PCJ_UPDATER_TYPE = "rya.indexing.pcj.updaterType";
     static final String PCJ_STORAGE_TYPE = "rya.indexing.pcj.storageType";
+    static final String MAINTAIN_STATEMENT_COUNTS = "rya.indexing.statistics.maintainStatementCounts";
 }

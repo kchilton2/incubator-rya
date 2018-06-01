@@ -23,6 +23,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.Optional;
 
 import org.apache.accumulo.core.client.Connector;
+import org.apache.rya.api.client.GetInstanceDetails;
 import org.apache.rya.api.client.InstanceExists;
 import org.apache.rya.api.client.RyaClient;
 
@@ -52,6 +53,7 @@ public class AccumuloRyaClientFactory {
 
         // Build the RyaCommands option with the initialized commands.
         final InstanceExists instanceExists = new AccumuloInstanceExists(connectionDetails, connector);
+        final GetInstanceDetails getInstanceDetails = new AccumuloGetInstanceDetails(connectionDetails, connector);
 
         return new RyaClient(
                 new AccumuloInstall(connectionDetails, connector),
@@ -61,7 +63,7 @@ public class AccumuloRyaClientFactory {
                 Optional.of(new AccumuloDeletePeriodicPCJ(connectionDetails, connector)),
                 Optional.of(new AccumuloListIncrementalQueries(connectionDetails, connector)),
                 new AccumuloBatchUpdatePCJ(connectionDetails, connector),
-                new AccumuloGetInstanceDetails(connectionDetails, connector),
+                getInstanceDetails,
                 instanceExists,
                 new AccumuloListInstances(connectionDetails, connector),
                 Optional.of(new AccumuloAddUser(connectionDetails, connector)),
@@ -70,6 +72,7 @@ public class AccumuloRyaClientFactory {
                 new AccumuloUninstall(connectionDetails, connector),
                 new AccumuloLoadStatements(connectionDetails, connector),
                 new AccumuloLoadStatementsFile(connectionDetails, connector),
-                new AccumuloExecuteSparqlQuery(connectionDetails, connector));
+                new AccumuloExecuteSparqlQuery(connectionDetails, connector),
+                Optional.of(new AccumuloGetStatementCount(instanceExists, getInstanceDetails, connector)));
     }
 }

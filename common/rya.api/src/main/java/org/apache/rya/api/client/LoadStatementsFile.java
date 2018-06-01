@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,6 +20,7 @@ package org.apache.rya.api.client;
 
 import java.nio.file.Path;
 
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.rio.RDFFormat;
 
 import edu.umd.cs.findbugs.annotations.DefaultAnnotation;
@@ -37,8 +38,9 @@ public interface LoadStatementsFile {
      * @param ryaInstanceName - The name of the Rya instance the statements will be loaded into. (not null)
      * @param statementsFile - A file that holds RDF statements that will be loaded. (not null)
      * @param format - The format of the statements file. (not null)
+     * @param contexts - The contexts the statements will be added to.
      * @throws InstanceDoesNotExistException No instance of Rya exists for the provided name.
      * @throws RyaClientException Something caused the command to fail.
      */
-    public void loadStatements(String ryaInstanceName, Path statementsFile, RDFFormat format) throws InstanceDoesNotExistException, RyaClientException;
+    public void loadStatements(String ryaInstanceName, Path statementsFile, RDFFormat format, IRI... contexts) throws InstanceDoesNotExistException, RyaClientException;
 }

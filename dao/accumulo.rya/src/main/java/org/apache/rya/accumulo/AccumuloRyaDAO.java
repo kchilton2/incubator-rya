@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -62,8 +62,8 @@ import org.apache.rya.accumulo.experimental.AccumuloIndexer;
 import org.apache.rya.accumulo.query.AccumuloRyaQueryEngine;
 import org.apache.rya.api.RdfCloudTripleStoreConfiguration;
 import org.apache.rya.api.RdfCloudTripleStoreConstants.TABLE_LAYOUT;
-import org.apache.rya.api.domain.RyaStatement;
 import org.apache.rya.api.domain.RyaIRI;
+import org.apache.rya.api.domain.RyaStatement;
 import org.apache.rya.api.layout.TableLayoutStrategy;
 import org.apache.rya.api.persist.RyaDAO;
 import org.apache.rya.api.persist.RyaDAOException;
@@ -239,10 +239,20 @@ public class AccumuloRyaDAO implements RyaDAO<AccumuloRdfConfiguration>, RyaName
             bd_po.delete();
             bd_osp.delete();
 
-            //TODO indexers do not support delete-UnsupportedOperation Exception will be thrown
-//            for (AccumuloIndex index : secondaryIndexers) {
-//                index.dropGraph(graphs);
-//            }
+             // Logging a warning when a secondary indexer does not support delete operations.
+            for (final AccumuloIndexer indexer : secondaryIndexers) {
+                try {
+                    indexer.dropGraph(graphs);
+                } catch(final Exception e) {
+                    logger.warn("A secondary indexer does not support dropping a graph from its index. Your index " +
+                            " will still include indexing over the dropped statements. Indexer: " + indexer.getClass(), e);
+                }
+            }
+
+            // Need to do a flush if any of the secondary indexers hook into the MultiTableBatchWriter to trigger deletes.
+            if (flushEachUpdate.get()) {
+                mt_bw.flush();
+            }
 
         } catch (final Exception e) {
             throw new RyaDAOException(e);

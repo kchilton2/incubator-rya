@@ -50,6 +50,7 @@ public class RyaClient {
     private final LoadStatements loadStatements;
     private final LoadStatementsFile loadStatementsFile;
     private final ExecuteSparqlQuery executeSparqlQuery;
+    private final Optional<GetStatementCount> getStatementCount;
 
     /**
      * Constructs an instance of {@link RyaClient}.
@@ -70,7 +71,8 @@ public class RyaClient {
             final Uninstall uninstall,
             final LoadStatements loadStatements,
             final LoadStatementsFile loadStatementsFile,
-            final ExecuteSparqlQuery executeSparqlQuery) {
+            final ExecuteSparqlQuery executeSparqlQuery,
+            final Optional<GetStatementCount> getStatementCount) {
         this.install = requireNonNull(install);
         this.createPcj = requireNonNull(createPcj);
         this.deletePcj = requireNonNull(deletePcj);
@@ -88,6 +90,7 @@ public class RyaClient {
         this.loadStatements = requireNonNull(loadStatements);
         this.loadStatementsFile = requireNonNull(loadStatementsFile);
         this.executeSparqlQuery = requireNonNull(executeSparqlQuery);
+        this.getStatementCount = requireNonNull(getStatementCount);
     }
 
     /**
@@ -211,5 +214,12 @@ public class RyaClient {
      */
     public ExecuteSparqlQuery getExecuteSparqlQuery() {
         return executeSparqlQuery;
+    }
+    
+    /**
+     * @return An instance of {@link GetStatementCount} that is connected to a Rya storage.
+     */
+    public Optional<GetStatementCount> getStatementCount() {
+        return getStatementCount;
     }
 }

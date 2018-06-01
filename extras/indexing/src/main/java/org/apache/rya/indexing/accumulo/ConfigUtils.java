@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -52,6 +52,7 @@ import org.apache.rya.indexing.accumulo.entity.EntityOptimizer;
 import org.apache.rya.indexing.accumulo.freetext.AccumuloFreeTextIndexer;
 import org.apache.rya.indexing.accumulo.freetext.LuceneTokenizer;
 import org.apache.rya.indexing.accumulo.freetext.Tokenizer;
+import org.apache.rya.indexing.accumulo.statistics.AccumuloStatementCountIndexer;
 import org.apache.rya.indexing.accumulo.temporal.AccumuloTemporalIndexer;
 import org.apache.rya.indexing.entity.EntityIndexOptimizer;
 import org.apache.rya.indexing.entity.update.mongo.MongoEntityIndexer;
@@ -60,6 +61,7 @@ import org.apache.rya.indexing.mongodb.freetext.MongoFreeTextIndexer;
 import org.apache.rya.indexing.mongodb.temporal.MongoTemporalIndexer;
 import org.apache.rya.indexing.pcj.matching.PCJOptimizer;
 import org.apache.rya.indexing.statement.metadata.matching.StatementMetadataOptimizer;
+import org.apache.rya.sail.config.RyaSailFactory;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 
@@ -149,6 +151,16 @@ public class ConfigUtils {
     public static final String TEMPORAL_PREDICATES_LIST = "sc.temporal.predicates";
 
     public static final String USE_MONGO = "sc.useMongo";
+
+    /**
+     * Setting this configuration tells the {@link RyaSailFactory} to use the
+     * {@link AccumuloStatementCountIndexer}.
+     * <p/>
+     * This field may only be set when the Rya Details for the Rya instance indicate
+     * the feature is enabled. If a user attempts to set a conflicting value, then it will
+     * be overwritten with whatever was specified at install time.
+     */
+    public static final String MAINTAIN_STATEMENT_COUNTS = "rya.indexing.statistics.maintainStatementCounts";
 
     public static boolean isDisplayQueryPlan(final Configuration conf) {
         return conf.getBoolean(DISPLAY_QUERY_PLAN, false);
@@ -446,8 +458,19 @@ public class ConfigUtils {
         return conf.getBoolean(USE_MONGO, false);
     }
 
+    public static boolean getMaintainStatementCounts(final Configuration conf) {
+        return conf.getBoolean(MAINTAIN_STATEMENT_COUNTS, false);
+    }
 
+    /**
+     * Populates the provided {@link Configuration} object to include values for the
+     * {@link #CONF_ADDITIONAL_INDEXERS} field and the {@link CONF_OPTIMIZERS} field
+     * based on the current state of the configuration.
+     *
+     * @param conf - The configuration object that will be inspected and updated. (not null)
+     */
     public static void setIndexers(final RdfCloudTripleStoreConfiguration conf) {
+        requireNonNull(conf);
 
         final List<String> indexList = Lists.newArrayList();
         final List<String> optimizers = Lists.newArrayList();
@@ -474,6 +497,7 @@ public class ConfigUtils {
                 conf.setPcjOptimizer(PCJOptimizer.class);
             }
         } else {
+            // Accumulo specific configurations.
             if (getUsePCJ(conf) || getUseOptimalPCJ(conf)) {
                 conf.setPcjOptimizer(PCJOptimizer.class);
             }
@@ -495,6 +519,10 @@ public class ConfigUtils {
             if (getUseEntity(conf)) {
                 indexList.add(EntityCentricIndex.class.getName());
                 optimizers.add(EntityOptimizer.class.getName());
+            }
+
+            if (getMaintainStatementCounts(conf)) {
+                indexList.add(AccumuloStatementCountIndexer.class.getName());
             }
         }
 

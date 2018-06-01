@@ -72,6 +72,7 @@ public class RyaDetailsFormatterTest {
                                     .setUpdateStrategy(PCJUpdateStrategy.INCREMENTAL)))
             .setProspectorDetails( new ProspectorDetails(Optional.of(new Date(12525211L))) )
             .setJoinSelectivityDetails( new JoinSelectivityDetails(Optional.of(new Date(125221351L))) )
+            .setMaintainStatementCounts(true)
             .build();
 
         final String formatted = new RyaDetailsFormatter().format(StorageType.ACCUMULO, details);
@@ -105,7 +106,9 @@ public class RyaDetailsFormatterTest {
                 "  Prospector:\n" +
                 "    Last Update Time: Wed Dec 31 22:28:45 EST 1969\n" +
                 "  Join Selectivity:\n" +
-                "    Last Updated Time: Fri Jan 02 05:47:01 EST 1970\n";
+                "    Last Updated Time: Fri Jan 02 05:47:01 EST 1970\n" +
+                "  Maintain Statement Counts:\n" +
+                "    Enabled: true\n";
 
         assertEquals(expected, formatted);
     }

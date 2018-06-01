@@ -316,7 +316,9 @@ public class RyaAdminCommandsTest {
                         "  Prospector:\n" +
                         "    Last Update Time: Wed Dec 31 22:28:45 EST 1969\n" +
                         "  Join Selectivity:\n" +
-                        "    Last Updated Time: Fri Jan 02 05:47:01 EST 1970\n";
+                        "    Last Updated Time: Fri Jan 02 05:47:01 EST 1970\n" +
+                        "  Maintain Statement Counts:\n" +
+                        "    Enabled: false\n";
         assertEquals(expected, message);
     }
 
@@ -372,6 +374,7 @@ public class RyaAdminCommandsTest {
         final boolean enableTemporalIndex = false;
         final boolean enablePcjIndex = true;
         final String fluoPcjAppName = instanceName + "pcj_updater";
+        final boolean maintainStatementCounts = false;
 
         // Execute the command.
         final InstallConfiguration installConfig = InstallConfiguration.builder()
@@ -381,6 +384,7 @@ public class RyaAdminCommandsTest {
                 .setEnableTemporalIndex(enableTemporalIndex)
                 .setEnablePcjIndex(enablePcjIndex)
                 .setFluoPcjAppName(fluoPcjAppName)
+                .setMaintainStatementCounts(maintainStatementCounts)
                 .build();
 
         final InstallPrompt mockInstallPrompt = mock(InstallPrompt.class);
@@ -389,7 +393,7 @@ public class RyaAdminCommandsTest {
         when(mockInstallPrompt.promptVerified(eq(instanceName), eq(installConfig))).thenReturn(true);
 
         final RyaAdminCommands commands = new RyaAdminCommands(state, mockInstallPrompt, mock(SparqlPrompt.class), mock(UninstallPrompt.class));
-        final String message = commands.installWithAccumuloParameters(instanceName, enableTableHashPrefix, enableEntityCentricIndex, enableFreeTextIndex, enableTemporalIndex, enablePcjIndex, fluoPcjAppName);
+        final String message = commands.installWithAccumuloParameters(instanceName, enableTableHashPrefix, enableEntityCentricIndex, enableFreeTextIndex, enableTemporalIndex, enablePcjIndex, fluoPcjAppName, maintainStatementCounts);
 
         // Verify the values that were provided to the command were passed through to the Install.
         verify(mockInstall).install(eq(instanceName), eq(installConfig));
@@ -417,6 +421,7 @@ public class RyaAdminCommandsTest {
         final boolean enableTemporalIndex = false;
         final boolean enablePcjIndex = true;
         final String fluoPcjAppName = instanceName + "pcj_updater";
+        final boolean maintainStatementCounts = false;
 
         // Execute the command.
         final InstallConfiguration installConfig = InstallConfiguration.builder()
@@ -426,6 +431,7 @@ public class RyaAdminCommandsTest {
                 .setEnableTemporalIndex(enableTemporalIndex)
                 .setEnablePcjIndex(enablePcjIndex)
                 .setFluoPcjAppName(fluoPcjAppName)
+                .setMaintainStatementCounts(maintainStatementCounts)
                 .build();
 
         final InstallPrompt mockInstallPrompt = mock(InstallPrompt.class);
@@ -434,7 +440,7 @@ public class RyaAdminCommandsTest {
         when(mockInstallPrompt.promptVerified(eq(instanceName), eq(installConfig))).thenReturn(false);
 
         final RyaAdminCommands commands = new RyaAdminCommands(state, mockInstallPrompt, mock(SparqlPrompt.class), mock(UninstallPrompt.class));
-        final String message = commands.installWithAccumuloParameters(instanceName, enableTableHashPrefix, enableEntityCentricIndex, enableFreeTextIndex, enableTemporalIndex, enablePcjIndex, fluoPcjAppName);
+        final String message = commands.installWithAccumuloParameters(instanceName, enableTableHashPrefix, enableEntityCentricIndex, enableFreeTextIndex, enableTemporalIndex, enablePcjIndex, fluoPcjAppName, maintainStatementCounts);
 
         // Verify a message is returned that indicates the success of the operation.
         final String expected = "Skipping Installation.";

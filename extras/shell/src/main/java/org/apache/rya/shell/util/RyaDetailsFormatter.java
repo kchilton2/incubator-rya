@@ -99,6 +99,7 @@ public class RyaDetailsFormatter {
 
             if (storageType == StorageType.ACCUMULO) {
                 report.append("Statistics:\n");
+
                 report.append("  Prospector:\n");
                 final String prospectorLastUpdateTime = format(details.getProspectorDetails().getLastUpdated(),
                         "unavailable");
@@ -110,6 +111,9 @@ public class RyaDetailsFormatter {
                 report.append("    Last Updated Time: ").append(jsLastUpdateTime).append("\n");
             }
         }
+
+        report.append("  Maintain Statement Counts:\n");
+        report.append("    Enabled: " + details.isMaintainStatementCounts() + "\n");
 
         return report.toString();
     }

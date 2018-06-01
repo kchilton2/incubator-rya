@@ -36,6 +36,7 @@ This project contains documentation about Apache Rya, a scalable RDF triple stor
 - [Incremental Join Maintenance Application (PCJ Updater)](pcj-updater.md)
 - [Rya Streams](rya-streams.md)
 - [Kafka Connect Integration](kafka-connect-integration.md)
+- [Statistics - Statement Counts by Context](statistics-statement-counts-by-context.md)
 
 # Samples
 - [Typical First Steps](sm-firststeps.md)

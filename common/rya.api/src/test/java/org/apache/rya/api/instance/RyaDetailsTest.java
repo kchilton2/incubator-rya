@@ -67,6 +67,7 @@ public class RyaDetailsTest {
                                     .setUpdateStrategy(PCJUpdateStrategy.INCREMENTAL)))
             .setProspectorDetails( new ProspectorDetails(Optional.of(new Date())) )
             .setJoinSelectivityDetails( new JoinSelectivityDetails(Optional.of(new Date())) )
+            .setMaintainStatementCounts(true)
             .setRyaStreamsDetails(new RyaStreamsDetails("localhost", 5));
 
         final RyaDetails details1 = builder.build();
@@ -99,6 +100,7 @@ public class RyaDetailsTest {
                                     .setUpdateStrategy(PCJUpdateStrategy.INCREMENTAL)))
             .setProspectorDetails( new ProspectorDetails(Optional.of(new Date())) )
             .setJoinSelectivityDetails( new JoinSelectivityDetails(Optional.of(new Date())) )
+            .setMaintainStatementCounts(true)
             .setRyaStreamsDetails(new RyaStreamsDetails("localhost", 5));
 
         final RyaDetails details1 = builder.build();
@@ -130,6 +132,7 @@ public class RyaDetailsTest {
                                     .setUpdateStrategy(PCJUpdateStrategy.INCREMENTAL)))
             .setProspectorDetails( new ProspectorDetails(Optional.of(new Date())) )
             .setJoinSelectivityDetails( new JoinSelectivityDetails(Optional.of(new Date())) )
+            .setMaintainStatementCounts(true)
             .setRyaStreamsDetails(new RyaStreamsDetails("localhost", 5))
             .build();
 

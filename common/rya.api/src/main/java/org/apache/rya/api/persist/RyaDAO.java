@@ -1,6 +1,4 @@
-package org.apache.rya.api.persist;
-
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,14 +16,13 @@ package org.apache.rya.api.persist;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-
+package org.apache.rya.api.persist;
 
 import java.util.Iterator;
 
 import org.apache.rya.api.RdfCloudTripleStoreConfiguration;
-import org.apache.rya.api.domain.RyaStatement;
 import org.apache.rya.api.domain.RyaIRI;
+import org.apache.rya.api.domain.RyaStatement;
 import org.apache.rya.api.persist.query.RyaQueryEngine;
 
 /**
@@ -120,8 +117,38 @@ public interface RyaDAO<C extends RdfCloudTripleStoreConfiguration> extends RyaC
      */
     public RyaNamespaceManager<C> getNamespaceManager();
 
+    /**
+     * Deletes all data in the core SPO tables as well as the indexes over those
+     * values from the configured Rya instance. Any structures that were created
+     * within the database architecture used to host Rya remain in tact. This DAO
+     * remains initialized and may continue to be used to insert data.
+     * <p/>
+     * For example, if you are using the Accumulo implementation of this interface,
+     * this will delete all of the rows that are in the tables (the data), but it
+     * will not delete the tables themselves. It just clears all the data out. You
+     * could then add more data again without initializing the DAO again.
+     * <p/>
+     * TODO
+     * This method should be revised to throw a {@link RyaDAOException}. Right
+     * now a program that is invoking purge would have no way to know if the purge
+     * operation failed other than by scraping the logs.
+     *
+     * @param configuration - Configures the purge operation. (not null)
+     */
     public void purge(RdfCloudTripleStoreConfiguration configuration);
 
+    /**
+     * Deletes all data in the core SPO tables as well as the indexes over those
+     * values for the configured Rya instance. All structures that were created
+     * within the database architecture used to host Rya are also deleted. This
+     * DAO will also be destroyed as if {@link #destroy()} was invoked.
+     * <p/>
+     * For example, if you are using the Accumulo implementation of this interface,
+     * this will drop all of the tables and destroy the DAO. You would need to
+     * initialize the DAO again if you wanted to recreate and use the Rya instance.
+     *
+     * @throws RyaDAOException The operation was unable to be completed.
+     */
     public void dropAndDestroy() throws RyaDAOException;
 
     /**

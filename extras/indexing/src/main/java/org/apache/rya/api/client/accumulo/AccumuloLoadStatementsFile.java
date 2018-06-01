@@ -35,6 +35,7 @@ import org.apache.rya.api.client.RyaClientException;
 import org.apache.rya.api.persist.RyaDAOException;
 import org.apache.rya.rdftriplestore.inference.InferenceEngineException;
 import org.apache.rya.sail.config.RyaSailFactory;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.repository.sail.SailRepositoryConnection;
@@ -70,7 +71,8 @@ public class AccumuloLoadStatementsFile extends AccumuloCommand implements LoadS
     }
 
     @Override
-    public void loadStatements(final String ryaInstanceName, final Path statementsFile, final RDFFormat format) throws InstanceDoesNotExistException, RyaClientException {
+    public void loadStatements(final String ryaInstanceName, final Path statementsFile, final RDFFormat format, final IRI... contexts)
+            throws InstanceDoesNotExistException, RyaClientException {
         requireNonNull(ryaInstanceName);
         requireNonNull(statementsFile);
         requireNonNull(format);
@@ -93,7 +95,7 @@ public class AccumuloLoadStatementsFile extends AccumuloCommand implements LoadS
             // Load the file.
             sailRepo = new SailRepository(sail);
             sailRepoConn = sailRepo.getConnection();
-            sailRepoConn.add(statementsFile.toFile(), null, format);
+            sailRepoConn.add(statementsFile.toFile(), null, format, contexts);
 
         } catch (final SailException | AccumuloException | AccumuloSecurityException | RyaDAOException | InferenceEngineException  e) {
             log.warn("Exception while loading:", e);

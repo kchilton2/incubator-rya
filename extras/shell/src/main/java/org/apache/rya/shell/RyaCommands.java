@@ -33,12 +33,17 @@ import java.util.Objects;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.rya.api.client.ExecuteSparqlQuery;
+import org.apache.rya.api.client.GetStatementCount;
 import org.apache.rya.api.client.RyaClient;
 import org.apache.rya.api.client.RyaClientException;
+import org.apache.rya.api.instance.RyaDetails;
 import org.apache.rya.rdftriplestore.utils.RdfFormatUtils;
 import org.apache.rya.shell.SharedShellState.ShellState;
 import org.apache.rya.shell.util.ConsolePrinter;
 import org.apache.rya.shell.util.SparqlPrompt;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -61,11 +66,11 @@ import joptsimple.internal.Strings;
  */
 @Component
 public class RyaCommands implements CommandMarker {
-
     private static final Logger log = LoggerFactory.getLogger(RyaCommands.class);
 
     public static final String LOAD_DATA_CMD = "load-data";
     public static final String SPARQL_QUERY_CMD = "sparql-query";
+    public static final String GET_STATEMENT_COUNT_CMD = "get-statement-count";
 
     private final SharedShellState state;
     private final SparqlPrompt sparqlPrompt;
@@ -99,12 +104,29 @@ public class RyaCommands implements CommandMarker {
         }
     }
 
+    /**
+     * Enables commands that are always available once the Shell is connected to a Rya Instance and
+     * the Maintain Statement Counts flag is set to true within the instance's {@link RyaDetails}.
+     */
+    @CliAvailabilityIndicator({ GET_STATEMENT_COUNT_CMD })
+    public boolean areStatementCountCommandsAvailable() {
+        // The commands are present if their Rya Details indicate the feature is enabled.
+        if(areInstanceCommandsAvailable()) {
+            return state.getShellState().getConnectedCommands().get().getStatementCount().isPresent();
+        }
+
+        // Any other case, don't show it.
+        return false;
+    }
+
     @CliCommand(value = LOAD_DATA_CMD, help = "Loads RDF Statement data from a local file to the connected Rya instance.")
     public String loadData(
             @CliOption(key = { "file" }, mandatory = true, help = "A local file containing RDF Statements that is to be loaded.")
             final String file,
             @CliOption(key = { "format" }, mandatory = false, help = "The format of the supplied RDF Statements file. [RDF/XML, N-Triples, Turtle, N3, TriX, TriG, BinaryRDF, N-Quads, JSON-LD, RDF/JSON, RDFa]")
-            final String format
+            final String format,
+            @CliOption(key = { "contexts" }, mandatory = false, help = "A comma delimited list of contexts(graphs) the data will be loaded into.")
+            final String context
             ) {
         // Fetch the command that is connected to the store.
         final ShellState shellState = state.getShellState();
@@ -139,7 +161,18 @@ public class RyaCommands implements CommandMarker {
                     consolePrinter.flush();
                 }
             }
-            commands.getLoadStatementsFile().loadStatements(ryaInstanceName.get(), rootedFile, rdfFormat);
+
+            if(context == null) {
+                commands.getLoadStatementsFile().loadStatements(ryaInstanceName.get(), rootedFile, rdfFormat);
+            } else {
+                final ValueFactory vf = SimpleValueFactory.getInstance();
+                final String[] contextStrs = context.split(",");
+                final IRI[] contexts = new IRI[contextStrs.length];
+                for (int i = 0; i < contextStrs.length; i++) {
+                    contexts[i] = vf.createIRI(contextStrs[i]);
+                }
+                commands.getLoadStatementsFile().loadStatements(ryaInstanceName.get(), rootedFile, rdfFormat, contexts);
+            }
 
             final String seconds = new DecimalFormat("0.0##").format((System.currentTimeMillis() - start) / 1000.0);
             return "Loaded the file: '" + file + "' successfully in " + seconds + " seconds.";
@@ -220,6 +253,37 @@ public class RyaCommands implements CommandMarker {
             } catch (final IOException e) {
                 log.error("Failed to close the sail resources used.", e);
             }
+        }
+    }
+
+    @CliCommand(value = GET_STATEMENT_COUNT_CMD, help = "Get the number of statements that have been loaded for a context.")
+    public String getStatementCount(
+            @CliOption(key = { "context" }, mandatory = true, help = "The context whose count will be returned.")
+            final String context) {
+        requireNonNull(context);
+
+        // Fetch the command that is connected to the store.
+        final RyaClient client = state.getShellState().getConnectedCommands().get();
+        final GetStatementCount getStatementCount = client.getStatementCount().get();
+
+        // Parse the provided context into an IRI.
+        final IRI contextIRI;
+        try {
+            final ValueFactory vf = SimpleValueFactory.getInstance();
+            contextIRI = vf.createIRI(context);
+        } catch(final IllegalArgumentException e) {
+            log.error("Invalid context string.", e);
+            return "Invalid context string.";
+        }
+
+        // Get the count for the context.
+        try {
+            final String ryaInstanceName = state.getShellState().getRyaInstanceName().get();
+            final long count = getStatementCount.getStatementCount(ryaInstanceName, contextIRI);
+            return "Count: " + count;
+        } catch (final RyaClientException e) {
+            log.error("Unable to fetch the statement count." ,e);
+            return "Unable to fetch the statement count.";
         }
     }
 

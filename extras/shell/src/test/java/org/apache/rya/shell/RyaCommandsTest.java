@@ -20,6 +20,7 @@ package org.apache.rya.shell;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,6 +32,7 @@ import java.nio.file.Paths;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.rya.api.client.ExecuteSparqlQuery;
+import org.apache.rya.api.client.GetStatementCount;
 import org.apache.rya.api.client.InstanceDoesNotExistException;
 import org.apache.rya.api.client.LoadStatementsFile;
 import org.apache.rya.api.client.RyaClient;
@@ -38,6 +40,8 @@ import org.apache.rya.api.client.RyaClientException;
 import org.apache.rya.api.client.accumulo.AccumuloConnectionDetails;
 import org.apache.rya.shell.util.ConsolePrinter;
 import org.apache.rya.shell.util.SparqlPrompt;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.junit.Test;
@@ -70,7 +74,7 @@ public class RyaCommandsTest {
 
         // Execute the command.
         final RyaCommands commands = new RyaCommands(state, mockSparqlPrompt, mockConsolePrinter);
-        final String message = commands.loadData(statementsFile, format);
+        final String message = commands.loadData(statementsFile, format, null);
 
         // Verify the values that were provided to the command were passed through to LoadStatementsFile.
         verify(mockLoadStatementsFile).loadStatements(instanceName, Paths.get(statementsFile), RDFFormat.NTRIPLES);
@@ -100,7 +104,7 @@ public class RyaCommandsTest {
 
         // Execute the command.
         final RyaCommands commands = new RyaCommands(state, mockSparqlPrompt, mockConsolePrinter);
-        final String message = commands.loadData(statementsFile, format);
+        final String message = commands.loadData(statementsFile, format, null);
 
         // Verify the values that were provided to the command were passed through to LoadStatementsFile
         // using a user rooted filename.
@@ -133,7 +137,7 @@ public class RyaCommandsTest {
 
         // Execute the command.
         final RyaCommands commands = new RyaCommands(state, mockSparqlPrompt, mockConsolePrinter);
-        final String message = commands.loadData(statementsFile, format);
+        final String message = commands.loadData(statementsFile, format, null);
 
         // Verify the values that were provided to the command were passed through to LoadStatementsFile.
         verify(mockLoadStatementsFile).loadStatements(instanceName, Paths.get(statementsFile), RDFFormat.NTRIPLES);
@@ -165,7 +169,7 @@ public class RyaCommandsTest {
         // Execute the command.
         final RyaCommands commands = new RyaCommands(state, mockSparqlPrompt, mockConsolePrinter);
 
-        commands.loadData(statementsFile, format);
+        commands.loadData(statementsFile, format, null);
     }
 
     @Test(expected = RuntimeException.class)
@@ -190,7 +194,7 @@ public class RyaCommandsTest {
         // Execute the command.
         final RyaCommands commands = new RyaCommands(state, mockSparqlPrompt, mockConsolePrinter);
 
-        commands.loadData(statementsFile, format);
+        commands.loadData(statementsFile, format, null);
     }
 
     @Test
@@ -308,8 +312,50 @@ public class RyaCommandsTest {
         final RyaCommands commands = new RyaCommands(state, mockSparqlPrompt, mockConsolePrinter);
         final String message = commands.sparqlQuery(queryFile);
 
-        assertEquals(expectedMessage, message);
         // Verify a message is returned that explains what was created.
+        assertEquals(expectedMessage, message);
     }
 
+    @Test
+    public void getStatementCount_wellFormattedContext() throws Exception {
+        // Mock the object that performs the get operation.
+        final String instanceName = "unitTest";
+
+        final GetStatementCount mockGetStmtCount = mock(GetStatementCount.class);
+        final ValueFactory vf = SimpleValueFactory.getInstance();
+        when(mockGetStmtCount.getStatementCount(eq(instanceName), eq(vf.createIRI("urn:contextA")))).thenReturn(5L);
+
+        final RyaClient mockCommands = mock(RyaClient.class);
+        when(mockCommands.getStatementCount()).thenReturn(java.util.Optional.of(mockGetStmtCount));
+
+        final SharedShellState state = new SharedShellState();
+        state.connectedToAccumulo(mock(AccumuloConnectionDetails.class), mockCommands);
+        state.connectedToInstance(instanceName);
+
+        // Execute the command.
+        final RyaCommands commands = new RyaCommands(state, mock(SparqlPrompt.class), mock(ConsolePrinter.class));
+        final String message = commands.getStatementCount("urn:contextA");
+
+        assertEquals("Count: 5", message);
+    }
+
+    @Test
+    public void getStatementCount_badContext() throws Exception {
+        // Mock the object that performs the get operation.
+        final String instanceName = "unitTest";
+
+        final GetStatementCount mockGetStmtCount = mock(GetStatementCount.class);
+        final RyaClient mockCommands = mock(RyaClient.class);
+        when(mockCommands.getStatementCount()).thenReturn(java.util.Optional.of(mockGetStmtCount));
+
+        final SharedShellState state = new SharedShellState();
+        state.connectedToAccumulo(mock(AccumuloConnectionDetails.class), mockCommands);
+        state.connectedToInstance(instanceName);
+
+        // Execute the command.
+        final RyaCommands commands = new RyaCommands(state, mock(SparqlPrompt.class), mock(ConsolePrinter.class));
+        final String message = commands.getStatementCount("contextA");
+
+        assertEquals("Invalid context string.", message);
+    }
 }

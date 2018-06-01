@@ -64,6 +64,7 @@ public class RyaDetails implements Serializable {
     // Statistics Details.
     private final ProspectorDetails prospectorDetails;
     private final JoinSelectivityDetails joinSelectivityDetails;
+    private final Optional<Boolean> maintainStatementCounts;
 
     // Rya Streams Details.
     private final Optional<RyaStreamsDetails> ryaStreamsDetails;
@@ -83,6 +84,7 @@ public class RyaDetails implements Serializable {
             final FreeTextIndexDetails freeTextDetails,
             final ProspectorDetails prospectorDetails,
             final JoinSelectivityDetails joinSelectivityDetails,
+            final Optional<Boolean> maintainStatementCounts,
             final Optional<RyaStreamsDetails> ryaStreamsDetails) {
         this.instanceName = requireNonNull(instanceName);
         this.version = requireNonNull(version);
@@ -94,6 +96,7 @@ public class RyaDetails implements Serializable {
         this.freeTextDetails = requireNonNull(freeTextDetails);
         this.prospectorDetails = requireNonNull(prospectorDetails);
         this.joinSelectivityDetails = requireNonNull(joinSelectivityDetails);
+        this.maintainStatementCounts = requireNonNull(maintainStatementCounts);
         this.ryaStreamsDetails = requireNonNull(ryaStreamsDetails);
     }
 
@@ -171,6 +174,14 @@ public class RyaDetails implements Serializable {
     }
 
     /**
+     * @return {@code true} if the instance of Rya should maintain counts indicating how many statements have
+     *   been inserted for each context; otherwise {@code false}.
+     */
+    public boolean isMaintainStatementCounts() {
+        return maintainStatementCounts.or(Boolean.FALSE);
+    }
+
+    /**
      * @return Information about the instance's Rya Streams integration, if it was set.
      */
     public Optional<RyaStreamsDetails> getRyaStreamsDetails() {
@@ -189,6 +200,7 @@ public class RyaDetails implements Serializable {
                 freeTextDetails,
                 prospectorDetails,
                 joinSelectivityDetails,
+                maintainStatementCounts,
                 ryaStreamsDetails);
     }
 
@@ -208,6 +220,7 @@ public class RyaDetails implements Serializable {
                     Objects.equals(freeTextDetails, details.freeTextDetails) &&
                     Objects.equals(prospectorDetails, details.prospectorDetails) &&
                     Objects.equals(joinSelectivityDetails, details.joinSelectivityDetails) &&
+                    Objects.equals(maintainStatementCounts, details.maintainStatementCounts) &&
                     Objects.equals(ryaStreamsDetails, details.ryaStreamsDetails);
         }
         return false;
@@ -249,6 +262,7 @@ public class RyaDetails implements Serializable {
         // Statistics Details.
         private ProspectorDetails prospectorDetails;
         private JoinSelectivityDetails joinSelectivityDetails;
+        private Boolean maintainStatementCounts;
 
         // Rya Streams Details.
         private RyaStreamsDetails ryaStreamsDetails;
@@ -276,6 +290,7 @@ public class RyaDetails implements Serializable {
             freeTextDetails = details.freeTextDetails;
             prospectorDetails = details.prospectorDetails;
             joinSelectivityDetails = details.joinSelectivityDetails;
+            maintainStatementCounts = details.maintainStatementCounts.orNull();
             ryaStreamsDetails = details.ryaStreamsDetails.orNull();
         }
 
@@ -390,6 +405,16 @@ public class RyaDetails implements Serializable {
         }
 
         /**
+         * @param maintainStatementCounts - {@code true} if the Rya instance must maintain statement counts for
+         *   each context; otherwise {@code false}.
+         * @return This {@link Builder} so that method invocations may be chained.
+         */
+        public Builder setMaintainStatementCounts(@Nullable final Boolean maintainStatementCounts) {
+            this.maintainStatementCounts = maintainStatementCounts;
+            return this;
+        }
+
+        /**
          * @param ryaStreamsDetails - Information about the instance's Rya Streams integration.
          * @return This {@link Builder} so that method invocations may be chained.
          */
@@ -414,6 +439,7 @@ public class RyaDetails implements Serializable {
                     freeTextDetails,
                     prospectorDetails,
                     joinSelectivityDetails,
+                    Optional.fromNullable(maintainStatementCounts),
                     Optional.fromNullable(ryaStreamsDetails));
         }
     }

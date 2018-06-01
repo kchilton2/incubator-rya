@@ -300,7 +300,10 @@ public class RyaAdminCommands implements CommandMarker {
             final boolean enablePcjIndex,
 
             @CliOption(key = {"fluoPcjAppName"}, mandatory = false, help = "Fluo Application Name for PCJ Index Updater (fluo app must be initialized and enablePcjIndex=true).")
-            final String fluoPcjAppName
+            final String fluoPcjAppName,
+
+            @CliOption(key = {"enableStatementCountMaintenance"}, mandatory = false, help = "Maintain Statement counts by Context.", unspecifiedDefaultValue = "false", specifiedDefaultValue = "true")
+            final boolean enableStatementCountMaintenance
             ) {
 
         // Fetch the commands that are connected to the store.
@@ -316,6 +319,7 @@ public class RyaAdminCommands implements CommandMarker {
                     .setEnableTemporalIndex(enableTemporalIndex)
                     .setEnablePcjIndex(enablePcjIndex)
                     .setFluoPcjAppName(fluoPcjAppName)
+                    .setMaintainStatementCounts(enableStatementCountMaintenance)
                     .build();
 
             // Verify the configuration is what the user actually wants to do.

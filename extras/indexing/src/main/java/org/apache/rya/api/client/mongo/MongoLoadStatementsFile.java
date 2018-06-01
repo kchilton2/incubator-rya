@@ -33,6 +33,7 @@ import org.apache.rya.api.persist.RyaDAOException;
 import org.apache.rya.mongodb.MongoDBRdfConfiguration;
 import org.apache.rya.rdftriplestore.inference.InferenceEngineException;
 import org.apache.rya.sail.config.RyaSailFactory;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.repository.sail.SailRepositoryConnection;
@@ -70,7 +71,8 @@ public class MongoLoadStatementsFile implements LoadStatementsFile {
     }
 
     @Override
-    public void loadStatements(final String ryaInstanceName, final Path statementsFile, final RDFFormat format) throws InstanceDoesNotExistException, RyaClientException {
+    public void loadStatements(final String ryaInstanceName, final Path statementsFile, final RDFFormat format, final IRI... contexts)
+            throws InstanceDoesNotExistException, RyaClientException {
         requireNonNull(ryaInstanceName);
         requireNonNull(statementsFile);
         requireNonNull(format);
@@ -91,7 +93,7 @@ public class MongoLoadStatementsFile implements LoadStatementsFile {
             sailRepoConn = sailRepo.getConnection();
 
             // Load the file.
-            sailRepoConn.add(statementsFile.toFile(), null, format);
+            sailRepoConn.add(statementsFile.toFile(), null, format, contexts);
 
         } catch (SailException | RyaDAOException | InferenceEngineException | AccumuloException | AccumuloSecurityException e) {
             throw new RyaClientException("Could not load statements into Rya because of a problem while creating the Sail object.", e);

@@ -40,9 +40,11 @@ import org.apache.rya.api.resolver.RyaToRdfConversions;
 import org.apache.rya.api.resolver.triple.TripleRow;
 import org.apache.rya.api.resolver.triple.impl.WholeRowTripleResolver;
 import org.apache.rya.test.accumulo.AccumuloITBase;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.junit.Test;
 
@@ -121,6 +123,54 @@ public class AccumuloLoadStatementsFileIT extends AccumuloITBase {
         }
 
         assertEquals(expected, statements);
+    }
+
+    @Test
+    public void loadTurtleFile_contexts() throws Exception {
+        // Install an instance of Rya.
+        final InstallConfiguration installConfig = InstallConfiguration.builder()
+                .setEnableTableHashPrefix(false)
+                .setEnableEntityCentricIndex(false)
+                .setEnableFreeTextIndex(false)
+                .setEnableTemporalIndex(false)
+                .setEnablePcjIndex(false)
+                .setEnableGeoIndex(false)
+                .setFluoPcjAppName("fluo_app_name")
+                .build();
+
+        final AccumuloConnectionDetails connectionDetails = new AccumuloConnectionDetails(
+                getUsername(),
+                getPassword().toCharArray(),
+                getInstanceName(),
+                getZookeepers());
+
+        final RyaClient ryaClient = AccumuloRyaClientFactory.build(connectionDetails, getConnector());
+        final Install install = ryaClient.getInstall();
+        install.install(getRyaInstanceName(), installConfig);
+
+        // Load the test statement file with a context.
+        final ValueFactory vf = SimpleValueFactory.getInstance();
+        final IRI contextA = vf.createIRI("urn:contextA");
+        ryaClient.getLoadStatementsFile().loadStatements(getRyaInstanceName(), Paths.get("src/test/resources/example.ttl"), RDFFormat.TURTLE, contextA);
+
+        // Verify the statements were loaded into the context.
+        final String sparql =
+                "SELECT * " +
+                "WHERE { " +
+                    "GRAPH <urn:contextA> { " +
+                        "?s ?p ?o " +
+                    "}" +
+                "}";
+
+        int count = 0;
+        try(final TupleQueryResult results = ryaClient.getExecuteSparqlQuery().executeSparqlQuery(getRyaInstanceName(), sparql)) {
+            while(results.hasNext()) {
+                count++;
+                results.next();
+            }
+        }
+
+        assertEquals(3, count);
     }
 
     private boolean isRyaMetadataStatement(final ValueFactory vf, final Statement statement) {

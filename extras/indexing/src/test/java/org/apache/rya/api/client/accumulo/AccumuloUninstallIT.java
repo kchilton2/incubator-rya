@@ -22,9 +22,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.rya.api.client.Install.InstallConfiguration;
-import org.apache.rya.test.accumulo.AccumuloITBase;
 import org.apache.rya.api.client.InstanceDoesNotExistException;
 import org.apache.rya.api.client.RyaClient;
+import org.apache.rya.test.accumulo.AccumuloITBase;
 import org.junit.Test;
 
 /**
@@ -53,6 +53,7 @@ public class AccumuloUninstallIT extends AccumuloITBase {
                 .setEnableTemporalIndex(true)
                 .setEnablePcjIndex(true)
                 .setEnableGeoIndex(true)
+                .setMaintainStatementCounts(true)
                 .build();
 
         final AccumuloConnectionDetails connectionDetails = new AccumuloConnectionDetails(

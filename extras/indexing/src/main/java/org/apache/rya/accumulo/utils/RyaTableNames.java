@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -33,6 +33,7 @@ import org.apache.rya.api.layout.TableLayoutStrategy;
 import org.apache.rya.api.layout.TablePrefixLayoutStrategy;
 import org.apache.rya.indexing.accumulo.entity.EntityCentricIndex;
 import org.apache.rya.indexing.accumulo.freetext.AccumuloFreeTextIndexer;
+import org.apache.rya.indexing.accumulo.statistics.AccumuloStatementCountIndexer;
 import org.apache.rya.indexing.accumulo.temporal.AccumuloTemporalIndexer;
 import org.apache.rya.indexing.pcj.storage.PrecomputedJoinStorage;
 import org.apache.rya.indexing.pcj.storage.PrecomputedJoinStorage.PCJStorageException;
@@ -102,6 +103,10 @@ public class RyaTableNames {
                     tables.add( tableNameFactory.makeTableName(ryaInstanceName, pcjId) );
                 }
             }
+        }
+
+        if(details.isMaintainStatementCounts()) {
+            tables.add( AccumuloStatementCountIndexer.makeTableName(ryaInstanceName)  );
         }
 
         // Verify they actually exist. If any don't, remove them from the list.

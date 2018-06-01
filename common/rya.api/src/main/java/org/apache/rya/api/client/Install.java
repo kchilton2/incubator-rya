@@ -22,12 +22,12 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Objects;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import com.google.common.base.Optional;
+
 import edu.umd.cs.findbugs.annotations.DefaultAnnotation;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;
-
-import com.google.common.base.Optional;
 
 /**
  * Installs a new instance of Rya.
@@ -71,6 +71,7 @@ public interface Install {
         private final boolean enableTemporalIndex;
         private final boolean enablePcjIndex;
         private final Optional<String> fluoPcjAppName;
+        private final boolean maintainStatementCounts;
 
         /**
          * Use a {@link Builder} to create instances of this class.
@@ -82,14 +83,16 @@ public interface Install {
                 final boolean enableEntityCentricIndex,
                 final boolean enableTemporalIndex,
                 final boolean enablePcjIndex,
-                final Optional<String> fluoPcjAppName) {
-            this.enableTableHashPrefix = requireNonNull(enableTableHashPrefix);
-            this.enableFreeTextIndex = requireNonNull(enableFreeTextIndex);
-            this.enableGeoIndex = requireNonNull(enableGeoIndex);
-            this.enableEntityCentricIndex = requireNonNull(enableEntityCentricIndex);
-            this.enableTemporalIndex = requireNonNull(enableTemporalIndex);
-            this.enablePcjIndex = requireNonNull(enablePcjIndex);
+                final Optional<String> fluoPcjAppName,
+                final boolean maintainStatementCounts) {
+            this.enableTableHashPrefix = enableTableHashPrefix;
+            this.enableFreeTextIndex = enableFreeTextIndex;
+            this.enableGeoIndex = enableGeoIndex;
+            this.enableEntityCentricIndex = enableEntityCentricIndex;
+            this.enableTemporalIndex = enableTemporalIndex;
+            this.enablePcjIndex = enablePcjIndex;
             this.fluoPcjAppName = requireNonNull(fluoPcjAppName);
+            this.maintainStatementCounts = maintainStatementCounts;
         }
 
         /**
@@ -142,6 +145,13 @@ public interface Install {
             return fluoPcjAppName;
         }
 
+        /**
+         * @return Whether or not the installed instance of Rya will maintain Statement counts for each context.
+         */
+        public boolean isMaintainStatementCounts() {
+            return maintainStatementCounts;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(
@@ -151,7 +161,8 @@ public interface Install {
                     enableEntityCentricIndex,
                     enableTemporalIndex,
                     enablePcjIndex,
-                    fluoPcjAppName);
+                    fluoPcjAppName,
+                    maintainStatementCounts);
         }
 
         @Override
@@ -167,7 +178,8 @@ public interface Install {
                         enableEntityCentricIndex == config.enableEntityCentricIndex &&
                         enableTemporalIndex == config.enableTemporalIndex &&
                         enablePcjIndex == config.enablePcjIndex &&
-                        Objects.equals(fluoPcjAppName, config.fluoPcjAppName);
+                        Objects.equals(fluoPcjAppName, config.fluoPcjAppName) &&
+                        maintainStatementCounts == config.maintainStatementCounts;
             }
             return false;
         }
@@ -191,6 +203,7 @@ public interface Install {
             private boolean enableTemporalIndex = false;
             private boolean enablePcjIndex = false;
             private String fluoPcjAppName = null;
+            private boolean maintainStatementCounts = false;
 
             /**
              * @param enabled - Whether or not the installed instance of Rya will include table prefix hashing.
@@ -246,8 +259,22 @@ public interface Install {
                 return this;
             }
 
+            /**
+             * @param fluoPcjAppName - The name of the Fluo application that updates this instance of Rya's PCJs.
+             * This {@link Builder} so that method invocations may be chained.
+             */
             public Builder setFluoPcjAppName(@Nullable final String fluoPcjAppName) {
                 this.fluoPcjAppName = fluoPcjAppName;
+                return this;
+            }
+
+            /**
+             * @param enabled - Whether or not the installed instance of Rya will maintain Statement counts for
+             *   each context.
+             * @return This {@link Builder} so that method invocations may be chained.
+             */
+            public Builder setMaintainStatementCounts(final boolean enabled) {
+                maintainStatementCounts = enabled;
                 return this;
             }
 
@@ -262,7 +289,8 @@ public interface Install {
                         enableEntityCentricIndex,
                         enableTemporalIndex,
                         enablePcjIndex,
-                        Optional.fromNullable(fluoPcjAppName));
+                        Optional.fromNullable(fluoPcjAppName),
+                        maintainStatementCounts);
             }
         }
     }
